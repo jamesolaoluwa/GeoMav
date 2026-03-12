@@ -13,6 +13,7 @@ from app.routers import (
     content,
     business,
     scans,
+    onboard,
 )
 
 app = FastAPI(title="GeoMav API", version="0.1.0")
@@ -36,6 +37,7 @@ app.include_router(opportunities.router, prefix="/api")
 app.include_router(content.router, prefix="/api")
 app.include_router(business.router, prefix="/api")
 app.include_router(scans.router, prefix="/api")
+app.include_router(onboard.router, prefix="/api")
 
 
 @app.get("/health")

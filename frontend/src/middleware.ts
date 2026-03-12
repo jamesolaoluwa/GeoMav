@@ -25,17 +25,19 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/signin") || request.nextUrl.pathname.startsWith("/signup");
-  const isDashboardRoute = request.nextUrl.pathname.startsWith("/dashboard");
+  const pathname = request.nextUrl.pathname;
+  const isAuthRoute = pathname.startsWith("/signin") || pathname.startsWith("/signup");
+  const isDashboardRoute = pathname.startsWith("/dashboard");
+  const isOnboardingRoute = pathname.startsWith("/onboarding");
 
-  if (isDashboardRoute && !user) {
-    const signInUrl = new URL("/signin", request.url);
-    return NextResponse.redirect(signInUrl);
+  // Unauthenticated users can't access dashboard or onboarding
+  if ((isDashboardRoute || isOnboardingRoute) && !user) {
+    return NextResponse.redirect(new URL("/signin", request.url));
   }
 
+  // Authenticated users on auth pages get redirected
   if (isAuthRoute && user) {
-    const dashboardUrl = new URL("/dashboard", request.url);
-    return NextResponse.redirect(dashboardUrl);
+    return NextResponse.redirect(new URL("/onboarding", request.url));
   }
 
   return supabaseResponse;
@@ -43,12 +45,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

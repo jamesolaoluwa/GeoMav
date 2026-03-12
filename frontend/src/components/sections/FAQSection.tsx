@@ -29,7 +29,7 @@ const faqs = [
   {
     question: "Which AI platforms do you monitor?",
     answer:
-      "GeoMav currently monitors ChatGPT (OpenAI), Google Gemini, Anthropic Claude, Perplexity, and Bing AI. We continuously add support for new AI assistants as they emerge.",
+      "GeoMav currently monitors ChatGPT (OpenAI), Google Gemini, Anthropic Claude, Perplexity, DeepSeek, and Bing AI. We continuously add support for new AI assistants as they emerge.",
   },
 ];
 

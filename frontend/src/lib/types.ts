@@ -23,7 +23,7 @@ export interface LLMResponse {
   created_at: string;
 }
 
-export type LLMName = "ChatGPT" | "Gemini" | "Claude" | "Perplexity" | "Bing";
+export type LLMName = "ChatGPT" | "Gemini" | "Claude" | "Perplexity" | "Bing" | "DeepSeek";
 
 export interface Mention {
   id: string;

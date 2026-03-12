@@ -43,7 +43,7 @@ export default function SignUpPage() {
       return;
     }
 
-    setSuccessMessage("Check your email to confirm your account");
+    setSuccessMessage("Account created! Check your email to confirm, then sign in to get started.");
   };
 
   const handleGoogleSignIn = async () => {
@@ -51,7 +51,7 @@ export default function SignUpPage() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: typeof window !== "undefined" ? `${window.location.origin}/dashboard` : `${process.env.NEXT_PUBLIC_SITE_URL || ""}/dashboard`,
+        redirectTo: typeof window !== "undefined" ? `${window.location.origin}/onboarding` : `${process.env.NEXT_PUBLIC_SITE_URL || ""}/onboarding`,
       },
     });
   };

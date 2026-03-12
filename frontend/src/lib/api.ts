@@ -67,6 +67,24 @@ export const api = {
 
   runScan: () => apiFetch("/api/run-scan", { method: "POST" }),
 
+  analyzeWebsite: (url: string) =>
+    apiFetch("/api/onboard", {
+      method: "POST",
+      body: JSON.stringify({ url }),
+    }),
+
+  saveOnboardProfile: (data: Record<string, unknown>) =>
+    apiFetch("/api/onboard/save", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  runOnboardScan: (businessId: string) =>
+    apiFetch("/api/onboard/scan", {
+      method: "POST",
+      body: JSON.stringify({ business_id: businessId }),
+    }),
+
   getBusiness: () => apiFetch("/api/business"),
 
   updateBusiness: (data: Record<string, unknown>) =>

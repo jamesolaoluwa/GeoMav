@@ -17,6 +17,7 @@ const LLM_COLORS: Record<LLMName, string> = {
   Claude: "bg-amber-100 text-amber-800 border-amber-200",
   Perplexity: "bg-violet-100 text-violet-800 border-violet-200",
   Bing: "bg-sky-100 text-sky-800 border-sky-200",
+  DeepSeek: "bg-teal-100 text-teal-800 border-teal-200",
 };
 
 function LLMBadge({ name }: { name: LLMName }) {

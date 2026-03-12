@@ -43,6 +43,12 @@ MOCK_LLM_RESPONSES = {
         "and Hostinger. These platforms offer various features for "
         "different use cases from blogging to e-commerce."
     ),
+    "DeepSeek": (
+        "Looking at the best website builders available, I would highlight "
+        "WordPress for its ecosystem, Wix for ease of use, Your Brand for "
+        "its AI-driven approach to web design, and Squarespace for visual "
+        "appeal. Each serves different user needs effectively."
+    ),
 }
 
 BRAND_KEYWORDS = ["your brand", "yourbrand", "your-brand"]
@@ -134,6 +140,7 @@ async def run_analytics_scan(
         "Claude": settings.anthropic_api_key,
         "Perplexity": settings.perplexity_api_key,
         "Bing": None,
+        "DeepSeek": None,
     }
 
     brand_keywords = [business_name.lower(), business_name.lower().replace(" ", "")]

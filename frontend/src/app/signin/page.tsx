@@ -34,7 +34,7 @@ export default function SignInPage() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push("/onboarding");
     router.refresh();
   };
 
@@ -43,7 +43,7 @@ export default function SignInPage() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: typeof window !== "undefined" ? `${window.location.origin}/dashboard` : `${process.env.NEXT_PUBLIC_SITE_URL || ""}/dashboard`,
+        redirectTo: typeof window !== "undefined" ? `${window.location.origin}/onboarding` : `${process.env.NEXT_PUBLIC_SITE_URL || ""}/onboarding`,
       },
     });
   };

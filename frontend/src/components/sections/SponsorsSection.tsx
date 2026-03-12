@@ -10,6 +10,7 @@ const sponsors = [
   { name: "Claude", id: "claude" },
   { name: "Perplexity", id: "perplexity" },
   { name: "Bing AI", id: "bingai" },
+  { name: "DeepSeek", id: "deepseek" },
   { name: "Google SGE", id: "googlesge" },
 ];
 

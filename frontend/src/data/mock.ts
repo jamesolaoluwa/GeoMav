@@ -41,6 +41,7 @@ export const mockLLMBreakdown: LLMBreakdown[] = [
   { llm_name: "Claude", mention_rate: 38.7, total_queries: 95, avg_rank: 3.8 },
   { llm_name: "Perplexity", mention_rate: 61.2, total_queries: 89, avg_rank: 2.5 },
   { llm_name: "Bing", mention_rate: 29.4, total_queries: 76, avg_rank: 5.3 },
+  { llm_name: "DeepSeek", mention_rate: 35.8, total_queries: 64, avg_rank: 4.5 },
 ];
 
 export const mockCompetitors: CompetitorVisibility[] = [
@@ -225,6 +226,7 @@ export const mockSentimentByLLM: SentimentByLLM[] = [
   { llm_name: "Claude", positive: 62, neutral: 28, negative: 10 },
   { llm_name: "Perplexity", positive: 58, neutral: 30, negative: 12 },
   { llm_name: "Bing", positive: 30, neutral: 40, negative: 30 },
+  { llm_name: "DeepSeek", positive: 48, neutral: 35, negative: 17 },
 ];
 
 export const mockShoppingResults: ShoppingResult[] = [
