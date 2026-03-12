@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+}
+
+@theme inline {
+  --color-page: #F8F6F3;
+  --color-page-outer: #E2DDF0;
+  --color-hero: #E8E2F0;
+  --color-card-warm: #F5F0EB;
+  --color-card-light: #F2EFE9;
+  --color-card-lavender: #8B7CB5;
+  --color-card-lavender-hover: #7A6BA4;
+  --color-card-dark: #2B2742;
+  --color-card-dark-hover: #362F52;
+  --color-btn-explore: #2D2440;
+  --color-btn-explore-hover: #3D3458;
+  --color-footer: #1E1529;
+
+  --color-heading: #1A1225;
+  --color-body: #4A3F5C;
+  --color-muted: #8C8499;
+  --color-on-dark: #E8E2F0;
+  --color-strike: #B0A8BC;
+
+  --color-accent-green: #6B8F71;
+  --color-accent-green-tint: #EEF4EF;
+  --color-accent-lavender: #B8A9D4;
+
+  --color-btn-primary: #1A1225;
+  --color-btn-primary-hover: #2D2440;
+  --color-border-default: #E8E3DC;
+  --color-border-subtle: #F0ECE6;
+  --color-outline-border: #D4CDE0;
+
+  --shadow-whisper: 0 1px 8px rgba(26, 18, 37, 0.03);
+  --shadow-soft: 0 2px 20px rgba(26, 18, 37, 0.05);
+  --shadow-lift: 0 4px 24px rgba(26, 18, 37, 0.08);
+
+  --radius-card: 20px;
+
+  --font-display: var(--font-dm-serif);
+  --font-body: var(--font-plus-jakarta);
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-body);
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--color-accent-lavender);
+  color: var(--color-heading);
+}
+
+.bg-pricing-gradient {
+  background: radial-gradient(ellipse at 50% 40%, var(--color-hero) 0%, var(--color-page) 70%);
+}
