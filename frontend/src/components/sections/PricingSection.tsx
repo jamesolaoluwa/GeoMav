@@ -1,87 +1,166 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import Container from "@/components/ui/Container";
-import BillingToggle from "@/components/ui/BillingToggle";
-import PricingCard from "@/components/ui/PricingCard";
+import CTAButton from "@/components/ui/CTAButton";
+import CheckItem from "@/components/ui/CheckItem";
 import { fadeUp, staggerContainer, viewportConfig } from "@/lib/motion";
-
-type BillingPeriod = "monthly" | "annual";
 
 interface PricingTier {
   name: string;
+  price: number;
+  period: string;
   audience: string;
-  monthlyPrice: number;
-  annualPrice: number;
-  originalMonthly: number;
-  originalAnnual: number;
-  billingNote: string;
+  description: string;
   features: string[];
   featured?: boolean;
-  addOnLabel?: string;
+  cta: string;
+  note?: string;
 }
 
 const pricingTiers: PricingTier[] = [
   {
-    name: "Launchpad",
-    audience: "Solo marketers and small merchants",
-    monthlyPrice: 29,
-    annualPrice: 24,
-    originalMonthly: 49,
-    originalAnnual: 40,
-    billingNote: "per month, billed annually",
+    name: "Starter",
+    price: 99,
+    period: "/month",
+    audience: "Small business owners",
+    description:
+      "Monitor how AI assistants represent your business, get hallucination alerts, and receive correction recommendations.",
     features: [
-      "Up to 3 connected wallets",
-      "Basic yield strategies",
+      "AI visibility monitoring",
+      "Hallucination alerts",
+      "Verified Business Profile",
+      "Correction recommendations",
+      "Weekly AI scan reports",
       "Email support",
-      "Weekly reports",
     ],
-    addOnLabel: "Add Human Coach+",
+    cta: "Start Monitoring",
   },
   {
-    name: "Momentum",
-    audience: "Growing teams and mid-market businesses",
-    monthlyPrice: 79,
-    annualPrice: 66,
-    originalMonthly: 129,
-    originalAnnual: 107,
-    billingNote: "per month, +$10 per additional brand",
+    name: "Growth",
+    price: 299,
+    period: "/month",
+    audience: "Businesses ready to optimize",
+    description:
+      "Full-service AI visibility optimization with automated fixes, content generation, and verified improvement tracking.",
     features: [
-      "Up to 15 connected wallets",
-      "Advanced yield optimization",
-      "Priority support",
-      "Daily reports & alerts",
-      "Custom integrations",
+      "Everything in Starter",
+      "Automated structured data generation",
+      "FAQ content creation",
+      "Direct schema deployment",
+      "Bi-weekly re-query verification",
+      "Before-and-after improvement reports",
     ],
     featured: true,
-    addOnLabel: "Add Human Coach+",
+    cta: "Start Optimizing",
   },
   {
-    name: "Enterprise",
-    audience: "Large organizations and treasuries",
-    monthlyPrice: 199,
-    annualPrice: 166,
-    originalMonthly: 299,
-    originalAnnual: 249,
-    billingNote: "per month, custom pricing available",
+    name: "Agency",
+    price: 999,
+    period: "/month",
+    audience: "Digital marketing agencies",
+    description:
+      "White-label AI visibility management for 10+ clients with bulk dashboards, branded reports, and API access.",
     features: [
-      "Unlimited connected wallets",
-      "Institutional-grade strategies",
-      "Dedicated account manager",
-      "Real-time monitoring",
-      "Custom reporting",
-      "SLA guarantee",
+      "Everything in Growth",
+      "10+ client accounts",
+      "White-label branded reports",
+      "Bulk client dashboards",
+      "API access",
+      "Priority support",
     ],
-    addOnLabel: "Add Human Coach+",
+    cta: "Contact Sales",
   },
 ];
 
-export default function PricingSection() {
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("annual");
+function PricingCardComponent({ tier }: { tier: PricingTier }) {
+  const isFeatured = tier.featured;
 
   return (
-    <section id="pricing" className="bg-pricing-gradient py-20 md:py-24 lg:py-28">
+    <div
+      className={`flex flex-col rounded-[var(--radius-card)] p-7 md:p-8 ${
+        isFeatured
+          ? "bg-card-dark text-on-dark shadow-lift ring-1 ring-white/10"
+          : "bg-white shadow-soft ring-1 ring-border-subtle"
+      }`}
+    >
+      <div>
+        <span
+          className={`text-[0.8rem] font-semibold uppercase tracking-[0.08em] ${
+            isFeatured ? "text-accent-lavender" : "text-card-lavender"
+          }`}
+        >
+          {tier.name}
+        </span>
+        <p
+          className={`mt-1 text-[0.85rem] ${
+            isFeatured ? "text-white/60" : "text-muted"
+          }`}
+        >
+          {tier.audience}
+        </p>
+      </div>
+
+      <div className="mt-5 flex items-baseline gap-1">
+        <span
+          className={`text-[2.75rem] font-semibold leading-none tracking-tight ${
+            isFeatured ? "text-white" : "text-heading"
+          }`}
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          ${tier.price}
+        </span>
+        <span
+          className={`text-[0.9rem] ${
+            isFeatured ? "text-white/50" : "text-muted"
+          }`}
+        >
+          {tier.period}
+        </span>
+      </div>
+
+      <p
+        className={`mt-4 text-[0.9rem] leading-relaxed ${
+          isFeatured ? "text-white/70" : "text-body"
+        }`}
+      >
+        {tier.description}
+      </p>
+
+      <div className="mt-6">
+        <CTAButton
+          variant={isFeatured ? "lavender" : "primary"}
+          fullWidth
+          href="/signup"
+        >
+          {tier.cta}
+        </CTAButton>
+      </div>
+
+      <ul className="mt-7 space-y-3 border-t border-white/10 pt-7">
+        {tier.features.map((feature) => (
+          <CheckItem key={feature} dark={isFeatured}>
+            {feature}
+          </CheckItem>
+        ))}
+      </ul>
+
+      {tier.name === "Agency" && (
+        <p className="mt-5 text-[0.78rem] text-muted italic">
+          Enterprise plans starting at $3,000/month available in Year 2 for
+          regional chains and mid-market brands.
+        </p>
+      )}
+    </div>
+  );
+}
+
+export default function PricingSection() {
+  return (
+    <section
+      id="pricing"
+      className="bg-pricing-gradient py-20 md:py-24 lg:py-28"
+    >
       <Container>
         <motion.div
           variants={staggerContainer}
@@ -90,7 +169,6 @@ export default function PricingSection() {
           viewport={viewportConfig}
           className="text-center"
         >
-          {/* Heading */}
           <motion.h2
             variants={fadeUp}
             className="text-[2.5rem] leading-[1.05] tracking-[-0.02em] text-heading md:text-[3rem] lg:text-[3.5rem]"
@@ -99,25 +177,15 @@ export default function PricingSection() {
             Plans and Pricing
           </motion.h2>
 
-          {/* Subtitle */}
           <motion.p
             variants={fadeUp}
-            className="mx-auto mt-4 max-w-[480px] text-[1rem] leading-relaxed text-body md:text-[1.1rem]"
+            className="mx-auto mt-4 max-w-[540px] text-[1rem] leading-relaxed text-body md:text-[1.1rem]"
           >
-            Choose the plan that fits your needs. All plans include core USD
-            Bloom features with no hidden fees.
+            From your first AI brand audit to full agency-scale optimization.
+            Choose the plan that fits where you are today.
           </motion.p>
-
-          {/* Billing toggle */}
-          <motion.div
-            variants={fadeUp}
-            className="mt-8 flex justify-center"
-          >
-            <BillingToggle value={billingPeriod} onChange={setBillingPeriod} />
-          </motion.div>
         </motion.div>
 
-        {/* Pricing cards */}
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -134,25 +202,7 @@ export default function PricingSection() {
                 transitionDelay: tier.featured ? "0s" : `${idx * 0.05}s`,
               }}
             >
-              <PricingCard
-                tier={tier.name}
-                audience={tier.audience}
-                price={
-                  billingPeriod === "monthly"
-                    ? tier.monthlyPrice
-                    : tier.annualPrice
-                }
-                originalPrice={
-                  billingPeriod === "monthly"
-                    ? tier.originalMonthly
-                    : tier.originalAnnual
-                }
-                billingNote={tier.billingNote}
-                features={tier.features}
-                featured={tier.featured}
-                addOnLabel={tier.addOnLabel}
-                billingPeriod={billingPeriod}
-              />
+              <PricingCardComponent tier={tier} />
             </motion.div>
           ))}
         </motion.div>

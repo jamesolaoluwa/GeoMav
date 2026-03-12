@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 import Container from "@/components/ui/Container";
 import SectionLabel from "@/components/ui/SectionLabel";
 import ArrowLink from "@/components/ui/ArrowLink";
@@ -15,28 +14,28 @@ import {
 
 const useCases = [
   {
-    id: "business",
-    title: "Business",
+    id: "small-business",
+    title: "Small Business",
     description:
-      "Boost user engagement by offering USD bloom, a secure fiat-backed stablecoin with high yields, allowing your customers to earn effortlessly on your platform.",
+      "A bakery in Atlanta discovers ChatGPT is telling customers they close at 6pm when they actually close at 9pm. GeoMav detects the hallucination, generates corrected structured data, and verifies the fix within a week.",
     linkText: "Learn more",
-    linkHref: "#business",
+    linkHref: "#small-business",
   },
   {
-    id: "treasury",
-    title: "Treasury",
+    id: "ecommerce",
+    title: "E-commerce",
     description:
-      "Optimize your treasury operations with USD bloom's transparent yield generation and instant liquidity access.",
+      "Track how AI assistants recommend your products compared to competitors. Identify missing mentions and optimize your product descriptions for AI discovery.",
     linkText: "Learn more",
-    linkHref: "#treasury",
+    linkHref: "#ecommerce",
   },
   {
-    id: "developers",
-    title: "Developers",
+    id: "agencies",
+    title: "Agencies",
     description:
-      "Integrate yield-bearing stablecoins into your dApp with simple, well-documented APIs and SDKs.",
+      "Manage AI visibility for multiple clients from a single dashboard. Generate monthly reports showing AI mention rates, accuracy improvements, and competitive positioning.",
     linkText: "Learn more",
-    linkHref: "#developers",
+    linkHref: "#agencies",
   },
 ];
 
@@ -71,10 +70,9 @@ function UseCaseCard({
           </div>
         </div>
 
-        {/* 3D Building illustration placeholder */}
+        {/* Chat bubble / AI assistant illustration */}
         <div className="relative mt-auto h-[220px] w-full md:h-[280px]">
           <div className="absolute inset-0 flex items-end justify-center overflow-hidden">
-            {/* Placeholder gradient representing the 3D building scene */}
             <div className="relative h-full w-full">
               <div
                 className="absolute inset-0"
@@ -83,7 +81,6 @@ function UseCaseCard({
                     "linear-gradient(180deg, transparent 0%, rgba(139,124,181,0.08) 60%, rgba(139,124,181,0.15) 100%)",
                 }}
               />
-              {/* Stylized building silhouette placeholder */}
               <svg
                 viewBox="0 0 200 180"
                 className="absolute bottom-0 left-1/2 h-[160px] w-[180px] -translate-x-1/2 md:h-[200px] md:w-[220px]"
@@ -91,99 +88,40 @@ function UseCaseCard({
                 xmlns="http://www.w3.org/2000/svg"
                 aria-hidden="true"
               >
-                {/* Steps */}
+                {/* Chat bubble */}
                 <rect
-                  x="40"
-                  y="150"
-                  width="120"
-                  height="8"
-                  rx="2"
-                  fill="#B8A9D4"
-                  fillOpacity="0.3"
-                />
-                <rect
-                  x="50"
-                  y="140"
-                  width="100"
-                  height="8"
-                  rx="2"
-                  fill="#B8A9D4"
-                  fillOpacity="0.35"
-                />
-                <rect
-                  x="60"
-                  y="130"
-                  width="80"
-                  height="8"
-                  rx="2"
-                  fill="#B8A9D4"
-                  fillOpacity="0.4"
-                />
-                {/* Base */}
-                <rect
-                  x="55"
-                  y="70"
-                  width="90"
-                  height="60"
-                  rx="3"
+                  x="30"
+                  y="40"
+                  width="140"
+                  height="80"
+                  rx="16"
                   fill="#8B7CB5"
-                  fillOpacity="0.25"
+                  fillOpacity="0.2"
+                  stroke="#8B7CB5"
+                  strokeWidth="1.5"
                 />
-                {/* Columns */}
-                <rect
-                  x="65"
-                  y="75"
-                  width="8"
-                  height="50"
-                  rx="2"
-                  fill="#8B7CB5"
-                  fillOpacity="0.5"
-                />
-                <rect
-                  x="85"
-                  y="75"
-                  width="8"
-                  height="50"
-                  rx="2"
-                  fill="#8B7CB5"
-                  fillOpacity="0.5"
-                />
-                <rect
-                  x="107"
-                  y="75"
-                  width="8"
-                  height="50"
-                  rx="2"
-                  fill="#8B7CB5"
-                  fillOpacity="0.5"
-                />
-                <rect
-                  x="127"
-                  y="75"
-                  width="8"
-                  height="50"
-                  rx="2"
-                  fill="#8B7CB5"
-                  fillOpacity="0.5"
-                />
-                {/* Roof triangle */}
+                {/* Bubble tail */}
                 <path
-                  d="M50 70 L100 30 L150 70 Z"
+                  d="M70 120 L60 145 L90 120"
                   fill="#8B7CB5"
-                  fillOpacity="0.35"
+                  fillOpacity="0.2"
+                  stroke="#8B7CB5"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
                 />
-                {/* Roof detail */}
-                <rect
-                  x="45"
-                  y="65"
-                  width="110"
-                  height="8"
-                  rx="2"
-                  fill="#8B7CB5"
-                  fillOpacity="0.4"
+                {/* Text lines in bubble */}
+                <rect x="50" y="58" width="80" height="6" rx="3" fill="#B8A9D4" fillOpacity="0.5" />
+                <rect x="50" y="72" width="100" height="6" rx="3" fill="#B8A9D4" fillOpacity="0.4" />
+                <rect x="50" y="86" width="60" height="6" rx="3" fill="#B8A9D4" fillOpacity="0.3" />
+                {/* AI sparkle */}
+                <circle cx="155" cy="55" r="8" fill="#8B7CB5" fillOpacity="0.3" />
+                <path
+                  d="M155 49 L155 61 M149 55 L161 55"
+                  stroke="#8B7CB5"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
                 />
               </svg>
-              {/* Decorative flowers/foliage hint */}
               <div className="absolute bottom-2 left-4 h-12 w-12 rounded-full bg-accent-lavender/20 blur-lg" />
               <div className="absolute bottom-4 right-6 h-10 w-10 rounded-full bg-accent-lavender/15 blur-lg" />
             </div>
@@ -227,7 +165,7 @@ export default function UseCasesSection() {
           {/* Left column: intro copy */}
           <div>
             <motion.div variants={fadeLeft}>
-              <SectionLabel>USD bloom in Action</SectionLabel>
+              <SectionLabel>GeoMav in Action</SectionLabel>
             </motion.div>
 
             <motion.h2
@@ -235,16 +173,15 @@ export default function UseCasesSection() {
               className="mt-4 text-[2.5rem] leading-[1.05] tracking-[-0.02em] text-heading md:text-[3rem] lg:text-[3.5rem]"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Use cases
+              Use Cases
             </motion.h2>
 
             <motion.p
               variants={fadeUp}
               className="mt-5 max-w-[400px] text-[1rem] leading-relaxed text-body md:text-[1.05rem]"
             >
-              USD bloom offers a variety of use cases for developers, businesses
-              and treasuries seeking secure and profitable stablecoin
-              integrations
+              GeoMav helps businesses of all sizes take control of their AI
+              presence
             </motion.p>
           </div>
 

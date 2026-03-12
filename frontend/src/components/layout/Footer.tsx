@@ -6,10 +6,10 @@ const footerLinks = {
   product: {
     title: "Product",
     links: [
-      { label: "USD Bloom", href: "#usd-bloom" },
-      { label: "Yield Strategies", href: "#yield" },
-      { label: "Security", href: "#security" },
-      { label: "Roadmap", href: "#roadmap" },
+      { label: "Features", href: "#features" },
+      { label: "Pricing", href: "#pricing" },
+      { label: "API", href: "#api" },
+      { label: "Changelog", href: "#changelog" },
     ],
   },
   company: {
@@ -18,15 +18,15 @@ const footerLinks = {
       { label: "About", href: "#about" },
       { label: "Blog", href: "#blog" },
       { label: "Careers", href: "#careers" },
-      { label: "Press", href: "#press" },
+      { label: "Contact", href: "#contact" },
     ],
   },
   resources: {
     title: "Resources",
     links: [
       { label: "Documentation", href: "#docs" },
-      { label: "API Reference", href: "#api" },
       { label: "Help Center", href: "#help" },
+      { label: "Status", href: "#status" },
       { label: "Community", href: "#community" },
     ],
   },
@@ -133,8 +133,8 @@ export default function Footer() {
           <div className="col-span-2">
             <Logo variant="light" />
             <p className="mt-4 max-w-[260px] text-[0.85rem] leading-relaxed text-muted">
-              The yield-bearing stablecoin that helps your capital grow while
-              staying pegged to the U.S. dollar.
+              AI visibility monitoring for businesses. Track, validate, and
+              optimize how AI assistants represent your brand.
             </p>
           </div>
 
@@ -163,7 +163,7 @@ export default function Footer() {
         {/* Bottom section: Copyright + Socials */}
         <div className="mt-8 flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="text-[0.8rem] text-muted">
-            &copy; {currentYear} BloomFi. All rights reserved.
+            &copy; {currentYear} GeoMav. All rights reserved.
           </p>
 
           {/* Social icons */}

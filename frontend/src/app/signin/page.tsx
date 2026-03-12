@@ -1,14 +1,51 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
 import AuthLayout from "@/components/auth/AuthLayout";
 import FormInput from "@/components/ui/FormInput";
 import SocialButton from "@/components/ui/SocialButton";
 import CTAButton from "@/components/ui/CTAButton";
 
 export default function SignInPage() {
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter();
+  const supabase = createClient();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    setLoading(false);
+
+    if (signInError) {
+      setError(signInError.message);
+      return;
+    }
+
+    router.push("/onboarding");
+    router.refresh();
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: typeof window !== "undefined" ? `${window.location.origin}/onboarding` : `${process.env.NEXT_PUBLIC_SITE_URL || ""}/onboarding`,
+      },
+    });
   };
 
   return (
@@ -21,9 +58,15 @@ export default function SignInPage() {
           Sign In
         </h2>
         <p className="mt-1 text-[0.9rem] text-muted">
-          Welcome back to BloomFi
+          Welcome back to GeoMav
         </p>
       </div>
+
+      {error && (
+        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <FormInput
@@ -32,6 +75,8 @@ export default function SignInPage() {
           type="email"
           placeholder="you@example.com"
           required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <FormInput
@@ -40,6 +85,8 @@ export default function SignInPage() {
           type="password"
           placeholder="Enter your password"
           required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
 
         <div className="flex items-center justify-between">
@@ -66,11 +113,11 @@ export default function SignInPage() {
         </div>
 
         {/* Social login */}
-        <SocialButton provider="google" />
+        <SocialButton provider="google" onClick={handleGoogleSignIn} />
 
         {/* Submit button */}
-        <CTAButton variant="lavender" fullWidth>
-          Sign In
+        <CTAButton variant="lavender" fullWidth type="submit" disabled={loading}>
+          {loading ? "Signing in..." : "Sign In"}
         </CTAButton>
       </form>
 
@@ -83,29 +130,6 @@ export default function SignInPage() {
           Sign Up
         </Link>
       </p>
-
-      {/* Continue without account */}
-      <div className="mt-6 border-t border-border-subtle pt-6">
-        <Link
-          href="/"
-          className="group flex w-full items-center justify-center gap-2 rounded-xl py-3 text-[0.9rem] font-medium text-muted transition-colors hover:text-body"
-        >
-          <span>Continue without account</span>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="transition-transform group-hover:translate-x-1"
-          >
-            <path d="M3 8h10M9 4l4 4-4 4" />
-          </svg>
-        </Link>
-      </div>
     </AuthLayout>
   );
 }

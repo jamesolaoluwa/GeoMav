@@ -18,7 +18,7 @@ export default function ClosingCTASection() {
             className="text-[2.25rem] leading-[1.1] tracking-[-0.02em] text-heading md:text-[2.75rem] lg:text-[3.25rem]"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Start growing your capital today
+            Take control of your AI presence
           </motion.h2>
 
           <motion.p
@@ -28,8 +28,8 @@ export default function ClosingCTASection() {
             transition={{ duration: 0.5, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
             className="mt-5 text-[1rem] leading-relaxed text-body md:text-[1.1rem]"
           >
-            Join thousands of users earning passive yield on their stablecoins.
-            No lockups, no complexity — just growth.
+            Join hundreds of businesses already monitoring and improving how AI
+            represents their brand. Start with a free scan.
           </motion.p>
 
           <motion.div

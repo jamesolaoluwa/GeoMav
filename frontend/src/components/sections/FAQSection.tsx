@@ -7,29 +7,29 @@ import { fadeUp, staggerContainer, viewportConfig } from "@/lib/motion";
 
 const faqs = [
   {
-    question: "What is USD Bloom?",
+    question: "What is GeoMav?",
     answer:
-      "USD Bloom is a yield-bearing stablecoin that helps your capital grow while staying pegged to the U.S. dollar. It combines the stability of traditional stablecoins with automated yield generation from carefully vetted DeFi protocols.",
+      "GeoMav is an AI visibility monitoring platform that tracks how AI assistants like ChatGPT, Gemini, Claude, and Perplexity represent your business. It detects inaccurate claims, monitors your ranking, and helps you optimize your AI presence.",
   },
   {
-    question: "How does yield generation work?",
+    question: "How does AI monitoring work?",
     answer:
-      "Your USD Bloom is automatically deployed into a diversified portfolio of high-performing, audited DeFi protocols. Our smart contracts continuously optimize allocations to maximize yield while maintaining strict risk parameters. You earn passive income without any manual management.",
+      "GeoMav sends realistic queries to major AI platforms on a weekly cycle — queries relevant to your business category and location. It then analyzes each response to check whether your business was mentioned, what claims were made, and which sources the AI relied on.",
   },
   {
-    question: "Is my capital safe?",
+    question: "What are AI hallucinations?",
     answer:
-      "Security is our top priority. All smart contracts are audited by leading security firms. We maintain over-collateralization, implement multiple layers of risk management, and only integrate with battle-tested protocols. Your funds remain accessible and fully backed at all times.",
+      "AI hallucinations are factual errors in AI-generated responses. For example, an AI might tell a customer your store closes at 6pm when you actually close at 9pm, or list services you don't offer. GeoMav automatically detects and classifies these errors.",
   },
   {
-    question: "Can I withdraw at any time?",
+    question: "How do I improve my AI visibility?",
     answer:
-      "Yes, USD Bloom offers instant liquidity with no lockup periods. You can withdraw your funds at any time without penalties or delays. Your capital remains fully liquid while earning yield.",
+      "GeoMav generates optimized content like JSON-LD structured data, /llms.txt files, and AI-readable business summaries. These help AI models understand your business accurately. After each optimization, GeoMav re-queries AI platforms to measure the improvement.",
   },
   {
-    question: "What are the fees?",
+    question: "Which AI platforms do you monitor?",
     answer:
-      "USD Bloom operates on a simple, transparent fee structure. There are no hidden fees, deposit fees, or withdrawal fees. We only take a small performance fee on the yield generated, meaning we only succeed when you succeed.",
+      "GeoMav currently monitors ChatGPT (OpenAI), Google Gemini, Anthropic Claude, Perplexity, DeepSeek, and Bing AI. We continuously add support for new AI assistants as they emerge.",
   },
 ];
 
@@ -56,7 +56,7 @@ export default function FAQSection() {
             variants={fadeUp}
             className="mx-auto mt-4 max-w-[520px] text-[1rem] leading-relaxed text-body md:text-[1.05rem]"
           >
-            Everything you need to know about USD Bloom and how it works.
+            Everything you need to know about GeoMav and how it works.
           </motion.p>
         </motion.div>
 

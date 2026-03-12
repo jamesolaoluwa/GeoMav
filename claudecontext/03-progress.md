@@ -1,0 +1,120 @@
+# GeoMav — Progress Tracker
+
+Last updated: 2026-03-12 (session 2)
+
+## Completed
+
+### Infrastructure
+- [x] Project structure (frontend + backend + supabase migrations)
+- [x] Supabase client setup (frontend browser + server, backend service role)
+- [x] Environment config (.env at root, .env.local in frontend)
+- [x] Start/stop scripts (start-backend.sh, start-frontend.sh, stop-all.sh)
+- [x] Backend config fixed (extra="ignore" for Pydantic settings)
+
+### Landing Page
+- [x] Full rebrand from BloomFi to GeoMav
+- [x] Hero section with animated network visualization SVG
+- [x] "What is GeoMav?" explainer section
+- [x] Feature cards: Monitor, Validate, Optimize
+- [x] AI platforms section (ChatGPT, Gemini, Claude, Perplexity, Bing AI, Google SGE)
+- [x] Use cases: Small Business, E-commerce, Agencies
+- [x] Pricing: Starter $99, Growth $299, Agency $999 (Enterprise $3k note)
+- [x] FAQ with GeoMav-specific questions
+- [x] CTA: "Take control of your AI presence"
+- [x] Logo updated (location-pin/radar icon + "GeoMav" text)
+- [x] Footer rebranded
+- [x] Navigation links updated
+
+### Authentication
+- [x] Sign-in page wired to Supabase Auth (email/password + Google OAuth)
+- [x] Sign-up page wired to Supabase Auth
+- [x] Auth middleware protecting /dashboard/* routes
+- [x] Redirect unauthenticated users to /signin
+- [x] Redirect authenticated users from /signin to /dashboard
+- [x] AuthLayout with animated network visualization
+- [x] GeoMav branding on auth pages
+- [x] Logo links back to landing page from auth pages
+
+### Dashboard Layout
+- [x] Sidebar with grouped navigation (Analytics, Monitor, Action, Settings)
+- [x] Top header with page title and notifications
+- [x] Sign Out button (sidebar bottom + header)
+- [x] GeoMav logo links back to landing page
+- [x] Mobile-responsive sidebar (hamburger menu)
+- [x] Active route highlighting
+
+### Dashboard Pages (10 pages)
+- [x] Overview: metric cards, visibility trend chart, LLM breakdown, competitors table, hallucinations table, Run Scan button
+- [x] Visibility: score history, brand rankings, Rankings By Topic table, query explorer
+- [x] Hallucinations: claims table with inline status dropdown (pending/deployed/resolved)
+- [x] Prompts: prompt list with add/delete, category badges
+- [x] Competitors: visibility ranking bar chart, mention frequency, sentiment comparison
+- [x] Sentiment: stacked area trend chart, by-LLM breakdown, by-query table
+- [x] Shopping: product mention matrix, shopping query results
+- [x] Opportunities: priority-ranked action items with category filters and status management
+- [x] Content: AI Summary / llms.txt / JSON-LD tabs with editor and deploy buttons
+- [x] Settings: business profile form, API keys, notification toggles
+
+### Backend API (11 routers)
+- [x] All routers created with mock data
+- [x] All routers updated to query Supabase with graceful mock fallback
+- [x] Dashboard aggregation from multiple tables
+- [x] CRUD operations for hallucinations, prompts, opportunities, content, business
+- [x] Run Scan endpoint triggering Analytics Agent as background task
+
+### Frontend-Backend Wiring
+- [x] All 10 dashboard pages fetch from API via useEffect/useState
+- [x] Loading skeletons on all pages
+- [x] Mock data fallback on API error
+- [x] Write operations wired: hallucination status, prompt CRUD, opportunity status, content save/deploy, business profile save
+- [x] Run Scan button on dashboard overview
+
+### Database
+- [x] Supabase SQL migration (001_initial_schema.sql): 8 tables, indexes, RLS policies
+- [x] Seed data (002_seed_data.sql): sample business, queries, responses, mentions, claims, content, opportunities, competitors
+- [x] Migrations run in Supabase
+
+### Backend Agents
+- [x] Analytics Agent: LLM querying with mock fallback, mention extraction, visibility calculation
+- [x] Enrichment Agent: business summary, llms.txt, JSON-LD, FAQ generation
+- [x] Reinforcement Agent: claim extraction, classification, correction generation
+
+## Pending / Not Yet Built
+
+### Onboarding Flow
+- [x] Post-signup onboarding page at /onboarding
+- [x] Website URL input -> fetch /llms.txt or meta tags
+- [x] Auto-populate Business Profile from website data
+- [x] Run initial AI scan across all LLMs
+- [x] Show initial results summary before redirecting to dashboard
+- [x] Middleware redirect: authenticated users on /signin go to /onboarding
+- [x] Signup redirects to /onboarding after account creation
+- [x] Backend: POST /api/onboard (analyze website), POST /api/onboard/save (save profile + generate queries), POST /api/onboard/scan (run initial scan)
+- [x] DeepSeek added as 6th tracked AI platform across all files
+
+### Real LLM Integration
+- [ ] Actually call OpenAI, Anthropic, Gemini, Perplexity APIs when keys are provided (agent code exists but untested with real keys)
+- [ ] Handle rate limiting and API errors gracefully
+
+### Missing Features
+- [ ] User profile / account management
+- [ ] Email notification system for hallucination alerts
+- [ ] Weekly report generation and delivery
+- [ ] Stripe/payment integration for subscription tiers
+- [ ] Multi-business support (multiple profiles per user)
+- [ ] Agency white-label features
+- [ ] Data export functionality
+- [ ] Historical data comparison / trend analysis with real data
+
+### Polish
+- [ ] Error boundary components
+- [ ] Toast notifications (replace alerts)
+- [ ] Form validation on all forms
+- [ ] Responsive design testing on all pages
+- [ ] SEO meta tags on landing page
+- [ ] Performance optimization (lazy loading charts)
+
+## Known Issues
+- Recharts shows width/height warnings during static pre-rendering (harmless, charts render fine in browser)
+- Next.js middleware deprecation warning (middleware -> proxy convention)
+- Shopping page falls back to mock data because backend response shape doesn't match frontend expected format

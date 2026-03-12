@@ -5,13 +5,13 @@ import Container from "@/components/ui/Container";
 import { fadeUp, viewportConfig } from "@/lib/motion";
 
 const sponsors = [
-  { name: "Fireblocks", id: "fireblocks" },
-  { name: "KuCoin", id: "kucoin" },
-  { name: "NGC", id: "ngc" },
-  { name: "NxGen", id: "nxgen" },
-  { name: "Matter Labs", id: "matterlabs" },
-  { name: "DEXTools", id: "dextools" },
-  { name: "NGRAVE", id: "ngrave" },
+  { name: "ChatGPT", id: "chatgpt" },
+  { name: "Google Gemini", id: "gemini" },
+  { name: "Claude", id: "claude" },
+  { name: "Perplexity", id: "perplexity" },
+  { name: "Bing AI", id: "bingai" },
+  { name: "DeepSeek", id: "deepseek" },
+  { name: "Google SGE", id: "googlesge" },
 ];
 
 function SponsorLogo({ name }: { name: string }) {
@@ -44,10 +44,10 @@ export default function SponsorsSection() {
             variants={fadeUp}
             className="shrink-0 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-muted/70"
           >
-            Backed by the best companies
+            Monitor your brand across
             <br className="md:hidden" />
             <span className="hidden md:inline"> </span>
-            and visionary angels.
+            leading AI platforms
           </motion.p>
 
           {sponsors.map((sponsor) => (
