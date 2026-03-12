@@ -2,9 +2,18 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import Image from "next/image";
 import CTAButton from "@/components/ui/CTAButton";
 import { fadeUp, scaleSettle, staggerContainer } from "@/lib/motion";
+
+const aiPlatforms = [
+  { label: "ChatGPT", x: 80, y: 60 },
+  { label: "Gemini", x: 320, y: 40 },
+  { label: "Claude", x: 520, y: 80 },
+  { label: "Perplexity", x: 160, y: 240 },
+  { label: "Bing AI", x: 440, y: 260 },
+];
+
+const brandCenter = { x: 300, y: 160 };
 
 export default function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -36,9 +45,10 @@ export default function HeroSection() {
             aria-hidden="true"
           >
             <path
-              d="M10 0C10 5.523 5.523 10 0 10C5.523 10 10 14.477 10 20C10 14.477 14.477 10 20 10C14.477 10 10 5.523 10 0Z"
+              d="M10 1C6.69 1 4 3.58 4 6.75C4 11.47 10 19 10 19C10 19 16 11.47 16 6.75C16 3.58 13.31 1 10 1Z"
               fill="var(--color-heading)"
             />
+            <circle cx="10" cy="6.75" r="2.25" fill="var(--color-page)" />
           </svg>
         </motion.div>
 
@@ -47,23 +57,24 @@ export default function HeroSection() {
           className="max-w-[640px] text-[2.5rem] leading-[1.0] tracking-[-0.02em] text-heading md:text-[3.5rem] lg:text-[4.5rem]"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Where Money Grows
+          Own Your AI Visibility
         </motion.h1>
 
         <motion.p
           variants={fadeUp}
           className="mx-auto mt-5 max-w-[480px] text-[0.95rem] leading-relaxed text-body md:text-[1.05rem]"
         >
-          A programmable, utility-driven stable token designed for native value
-          accrual and seamless integration into DeFi.
+          Track how ChatGPT, Gemini, Claude, and Perplexity represent your
+          business. Detect hallucinations, fix inaccuracies, and improve your
+          ranking in AI-powered discovery.
         </motion.p>
 
         <motion.div variants={fadeUp} className="mt-7">
-          <CTAButton href="/signup">Get started</CTAButton>
+          <CTAButton href="/signup">Start Monitoring</CTAButton>
         </motion.div>
       </motion.div>
 
-      {/* 3D hero scene with subtle parallax */}
+      {/* Network visualization */}
       <motion.div
         className="relative z-0 mt-auto w-full"
         style={{ y: bgY }}
@@ -72,7 +83,6 @@ export default function HeroSection() {
         animate="visible"
       >
         <div className="relative w-full">
-          {/* Top gradient fade into page background */}
           <div
             className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[30%]"
             style={{
@@ -80,15 +90,142 @@ export default function HeroSection() {
                 "linear-gradient(180deg, var(--color-page) 0%, transparent 100%)",
             }}
           />
-          <Image
-            src="/images/hero-bg1.png"
-            alt="Surreal lavender floral landscape with metallic coins emerging from purple blooms"
-            width={1536}
-            height={1024}
-            priority
-            className="w-full max-h-[50vh] object-cover object-bottom md:max-h-[55vh]"
-            sizes="100vw"
-          />
+          <svg
+            viewBox="0 0 600 320"
+            className="mx-auto w-full max-w-[700px] max-h-[50vh] md:max-h-[55vh]"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            {/* Connection lines from AI platforms to brand center */}
+            {aiPlatforms.map((platform, i) => (
+              <g key={platform.label}>
+                <motion.line
+                  x1={platform.x}
+                  y1={platform.y}
+                  x2={brandCenter.x}
+                  y2={brandCenter.y}
+                  stroke="#B8A9D4"
+                  strokeWidth="1.5"
+                  strokeDasharray="6 4"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 0.5 }}
+                  transition={{ duration: 1.2, delay: 0.3 + i * 0.15, ease: "easeOut" }}
+                />
+                {/* Animated data pulse along line */}
+                <motion.circle
+                  r="3"
+                  fill="#8B7CB5"
+                  initial={{ opacity: 0 }}
+                  animate={{
+                    opacity: [0, 1, 0],
+                    cx: [platform.x, brandCenter.x],
+                    cy: [platform.y, brandCenter.y],
+                  }}
+                  transition={{
+                    duration: 2.5,
+                    delay: 1 + i * 0.4,
+                    repeat: Infinity,
+                    repeatDelay: 2 + i * 0.3,
+                    ease: "easeInOut",
+                  }}
+                />
+              </g>
+            ))}
+
+            {/* Brand center node */}
+            <motion.circle
+              cx={brandCenter.x}
+              cy={brandCenter.y}
+              r="28"
+              fill="#8B7CB5"
+              fillOpacity="0.15"
+              stroke="#8B7CB5"
+              strokeWidth="2"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+            />
+            <motion.circle
+              cx={brandCenter.x}
+              cy={brandCenter.y}
+              r="12"
+              fill="#8B7CB5"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
+            />
+            <text
+              x={brandCenter.x}
+              y={brandCenter.y + 46}
+              textAnchor="middle"
+              fill="#8B7CB5"
+              fontSize="11"
+              fontWeight="600"
+            >
+              Your Brand
+            </text>
+
+            {/* Radar pulse rings */}
+            {[40, 56].map((r, i) => (
+              <motion.circle
+                key={r}
+                cx={brandCenter.x}
+                cy={brandCenter.y}
+                r={r}
+                fill="none"
+                stroke="#B8A9D4"
+                strokeWidth="1"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: [0.3, 0], scale: [0.8, 1.3] }}
+                transition={{
+                  duration: 3,
+                  delay: 1.5 + i * 1,
+                  repeat: Infinity,
+                  ease: "easeOut",
+                }}
+              />
+            ))}
+
+            {/* AI platform nodes */}
+            {aiPlatforms.map((platform, i) => (
+              <g key={platform.label}>
+                <motion.circle
+                  cx={platform.x}
+                  cy={platform.y}
+                  r="20"
+                  fill="#B8A9D4"
+                  fillOpacity="0.12"
+                  stroke="#B8A9D4"
+                  strokeWidth="1.5"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.4 + i * 0.1, ease: "easeOut" }}
+                />
+                <motion.circle
+                  cx={platform.x}
+                  cy={platform.y}
+                  r="6"
+                  fill="#B8A9D4"
+                  fillOpacity="0.6"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.4, delay: 0.6 + i * 0.1, ease: "easeOut" }}
+                />
+                <text
+                  x={platform.x}
+                  y={platform.y + 32}
+                  textAnchor="middle"
+                  fill="#8B7CB5"
+                  fontSize="10"
+                  fontWeight="500"
+                  opacity="0.8"
+                >
+                  {platform.label}
+                </text>
+              </g>
+            ))}
+          </svg>
         </div>
       </motion.div>
     </section>

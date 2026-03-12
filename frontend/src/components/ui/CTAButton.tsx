@@ -14,6 +14,8 @@ interface CTAButtonProps {
   fullWidth?: boolean;
   size?: "default" | "sm";
   className?: string;
+  type?: "button" | "submit";
+  disabled?: boolean;
 }
 
 const variantStyles: Record<Variant, string> = {
@@ -44,6 +46,8 @@ export default function CTAButton({
   fullWidth = false,
   size = "default",
   className = "",
+  type = "button",
+  disabled = false,
 }: CTAButtonProps) {
   const classes = [
     "inline-flex items-center justify-center rounded-full font-medium leading-none",
@@ -70,9 +74,10 @@ export default function CTAButton({
 
   return (
     <motion.button
-      type="button"
+      type={type}
       className={classes}
       onClick={onClick}
+      disabled={disabled}
       whileTap={buttonTap}
     >
       {children}

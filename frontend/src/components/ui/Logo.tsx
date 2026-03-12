@@ -9,7 +9,6 @@ export default function Logo({ variant = "dark", className = "" }: LogoProps) {
 
   return (
     <a href="/" className={`flex items-center gap-2 ${className}`}>
-      {/* Stylized plus/bloom icon */}
       <svg
         width="28"
         height="28"
@@ -18,16 +17,20 @@ export default function Logo({ variant = "dark", className = "" }: LogoProps) {
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
+        {/* Location pin */}
         <path
-          d="M14 0C14 7.732 7.732 14 0 14C7.732 14 14 20.268 14 28C14 20.268 20.268 14 28 14C20.268 14 14 7.732 14 0Z"
+          d="M14 2C9.03 2 5 5.87 5 10.65C5 17.16 14 26 14 26C14 26 23 17.16 23 10.65C23 5.87 18.97 2 14 2Z"
           fill={color}
         />
+        {/* Radar rings */}
+        <circle cx="14" cy="10.5" r="3.5" fill="none" stroke={variant === "dark" ? "#F8F6F3" : "#1A1225"} strokeWidth="1.2" />
+        <circle cx="14" cy="10.5" r="1.5" fill={variant === "dark" ? "#F8F6F3" : "#1A1225"} />
       </svg>
       <span
         className={`text-lg font-semibold tracking-tight ${textColor}`}
         style={{ fontFamily: "var(--font-body)" }}
       >
-        BloomFi
+        GeoMav
       </span>
     </a>
   );

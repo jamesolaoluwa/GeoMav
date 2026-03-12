@@ -3,9 +3,9 @@ import { dmSerif, plusJakarta } from "@/lib/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BloomFi — Where Money Grows",
+  title: "GeoMav — AI Visibility Monitoring",
   description:
-    "USD Bloom is a yield-bearing stablecoin that helps your capital grow while staying pegged to the U.S. dollar.",
+    "Track how AI assistants represent your business. Monitor mentions, detect hallucinations, and optimize your visibility across ChatGPT, Gemini, Claude, and more.",
 };
 
 export default function RootLayout({

@@ -1,14 +1,59 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
 import AuthLayout from "@/components/auth/AuthLayout";
 import FormInput from "@/components/ui/FormInput";
 import SocialButton from "@/components/ui/SocialButton";
 import CTAButton from "@/components/ui/CTAButton";
 
 export default function SignUpPage() {
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter();
+  const supabase = createClient();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+
+    const { error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    setLoading(false);
+
+    if (signUpError) {
+      setError(signUpError.message);
+      return;
+    }
+
+    setSuccessMessage("Check your email to confirm your account");
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: typeof window !== "undefined" ? `${window.location.origin}/dashboard` : `${process.env.NEXT_PUBLIC_SITE_URL || ""}/dashboard`,
+      },
+    });
   };
 
   return (
@@ -21,9 +66,21 @@ export default function SignUpPage() {
           Sign Up
         </h2>
         <p className="mt-1 text-[0.9rem] text-muted">
-          Create your BloomFi account
+          Create your GeoMav account
         </p>
       </div>
+
+      {error && (
+        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="mt-4 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
+          {successMessage}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <FormInput
@@ -32,6 +89,8 @@ export default function SignUpPage() {
           type="email"
           placeholder="you@example.com"
           required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <FormInput
@@ -41,6 +100,8 @@ export default function SignUpPage() {
           placeholder="Create a password"
           helperText="Use 8 or more characters with a mix of letters, numbers & symbols."
           required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
 
         <FormInput
@@ -49,6 +110,8 @@ export default function SignUpPage() {
           type="password"
           placeholder="Confirm your password"
           required
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
         />
 
         {/* Terms checkbox */}
@@ -77,11 +140,11 @@ export default function SignUpPage() {
         </div>
 
         {/* Social login */}
-        <SocialButton provider="google" />
+        <SocialButton provider="google" onClick={handleGoogleSignIn} />
 
         {/* Submit button */}
-        <CTAButton variant="lavender" fullWidth>
-          Sign Up
+        <CTAButton variant="lavender" fullWidth type="submit" disabled={loading}>
+          {loading ? "Creating account..." : "Sign Up"}
         </CTAButton>
       </form>
 
@@ -94,29 +157,6 @@ export default function SignUpPage() {
           Sign In
         </Link>
       </p>
-
-      {/* Continue without account */}
-      <div className="mt-6 border-t border-border-subtle pt-6">
-        <Link
-          href="/"
-          className="group flex w-full items-center justify-center gap-2 rounded-xl py-3 text-[0.9rem] font-medium text-muted transition-colors hover:text-body"
-        >
-          <span>Continue without account</span>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="transition-transform group-hover:translate-x-1"
-          >
-            <path d="M3 8h10M9 4l4 4-4 4" />
-          </svg>
-        </Link>
-      </div>
     </AuthLayout>
   );
 }
