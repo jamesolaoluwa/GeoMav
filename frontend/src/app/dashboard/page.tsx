@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { api } from "@/lib/api";
 import {
   mockDashboardMetrics,
   mockVisibilityTrend,
@@ -17,7 +18,7 @@ import {
   mockCompetitors,
   mockHallucinations,
 } from "@/data/mock";
-import type { TimeFilter, ClaimStatus } from "@/lib/types";
+import type { TimeFilter, ClaimStatus, LLMBreakdown, CompetitorVisibility } from "@/lib/types";
 
 const TIME_FILTERS: { value: TimeFilter; label: string }[] = [
   { value: "all_time", label: "All Time" },
@@ -82,9 +83,134 @@ function ChangeIndicator({
   );
 }
 
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="h-8 w-48 animate-pulse rounded bg-gray-200" />
+        <div className="h-10 w-64 animate-pulse rounded bg-gray-200" />
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+            <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
+            <div className="mt-2 h-8 w-16 animate-pulse rounded bg-gray-200" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+        <div className="mb-4 h-6 w-32 animate-pulse rounded bg-gray-200" />
+        <div className="h-64 animate-pulse rounded bg-gray-200" />
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200/50">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <div className="h-6 w-28 animate-pulse rounded bg-gray-200" />
+          </div>
+          <div className="space-y-3 p-5">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 animate-pulse rounded bg-gray-200" />
+            ))}
+          </div>
+        </div>
+        <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200/50">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <div className="h-6 w-36 animate-pulse rounded bg-gray-200" />
+          </div>
+          <div className="space-y-3 p-5">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 animate-pulse rounded bg-gray-200" />
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200/50">
+        <div className="border-b border-slate-200 px-5 py-4">
+          <div className="h-6 w-40 animate-pulse rounded bg-gray-200" />
+        </div>
+        <div className="space-y-3 p-5">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-12 animate-pulse rounded bg-gray-200" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all_time");
-  const metrics = mockDashboardMetrics;
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [scanning, setScanning] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    api
+      .getDashboard(timeFilter)
+      .then((res: any) => {
+        setData(res);
+      })
+      .catch(() => {
+        setData(null);
+      })
+      .finally(() => setLoading(false));
+  }, [timeFilter]);
+
+  const handleRunScan = async () => {
+    setScanning(true);
+    try {
+      await api.runScan();
+      alert("Scan started successfully. Data will refresh shortly.");
+      setLoading(true);
+      const res = await api.getDashboard(timeFilter);
+      setData(res);
+    } catch {
+      alert("Failed to start scan. Please try again.");
+    } finally {
+      setScanning(false);
+      setLoading(false);
+    }
+  };
+
+  const metrics = data
+    ? {
+        visibility_score: data.visibility_score ?? mockDashboardMetrics.visibility_score,
+        visibility_change: data.visibility_change ?? mockDashboardMetrics.visibility_change,
+        brand_ranking: data.brand_ranking ?? mockDashboardMetrics.brand_ranking,
+        brand_ranking_total: data.brand_ranking_total ?? mockDashboardMetrics.brand_ranking_total,
+        claim_accuracy: data.claim_accuracy ?? mockDashboardMetrics.claim_accuracy,
+        claim_accuracy_change: data.claim_accuracy_change ?? mockDashboardMetrics.claim_accuracy_change,
+        active_hallucinations: data.active_hallucinations ?? mockDashboardMetrics.active_hallucinations,
+      }
+    : mockDashboardMetrics;
+
+  const visibilityTrend = data?.visibility_trend?.length
+    ? data.visibility_trend.map((d: { date: string; score: number }) => ({ date: d.date, score: d.score }))
+    : mockVisibilityTrend;
+
+  const llmBreakdown: LLMBreakdown[] = data?.llm_breakdown?.length
+    ? data.llm_breakdown.map((r: any) => ({
+        llm_name: r.llm ?? r.llm_name ?? "Unknown",
+        mention_rate: r.visibility ?? r.mention_rate ?? 0,
+        total_queries: r.mentions ?? r.total_queries ?? 0,
+        avg_rank: r.avg_rank ?? 5,
+      }))
+    : mockLLMBreakdown;
+
+  const competitors: CompetitorVisibility[] = data?.competitors?.length
+    ? data.competitors.map((c: any) => ({
+        name: c.name ?? "Unknown",
+        visibility_score: c.visibility ?? c.visibility_score ?? 0,
+        change: c.change ?? 0,
+      }))
+    : mockCompetitors;
+
+  const hallucinations: typeof mockHallucinations = data?.hallucinations ?? mockHallucinations;
+
+  if (loading && !data) {
+    return <LoadingSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
@@ -93,7 +219,16 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-semibold text-slate-900">
           Dashboard Overview
         </h1>
-        <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleRunScan}
+            disabled={scanning}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {scanning ? "Running…" : "Run Scan"}
+          </button>
+          <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
           {TIME_FILTERS.map(({ value, label }) => (
             <button
               key={value}
@@ -107,6 +242,7 @@ export default function DashboardPage() {
               {label}
             </button>
           ))}
+          </div>
         </div>
       </div>
 
@@ -162,7 +298,7 @@ export default function DashboardPage() {
         </h2>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={mockVisibilityTrend}>
+            <LineChart data={visibilityTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis
                 dataKey="date"
@@ -226,7 +362,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {mockLLMBreakdown.map((row) => (
+                {llmBreakdown.map((row) => (
                   <tr key={row.llm_name} className="hover:bg-slate-50/50">
                     <td className="whitespace-nowrap px-5 py-3 text-sm font-medium text-slate-900">
                       {row.llm_name}
@@ -273,7 +409,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {mockCompetitors.map((row, idx) => (
+                {competitors.map((row, idx) => (
                   <tr
                     key={row.name}
                     className={`hover:bg-slate-50/50 ${
@@ -329,7 +465,7 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {mockHallucinations.map((item) => (
+              {hallucinations.map((item) => (
                 <tr key={item.id} className="hover:bg-slate-50/50">
                   <td className="whitespace-nowrap px-5 py-3 text-sm font-medium text-slate-900">
                     {item.llm_name}

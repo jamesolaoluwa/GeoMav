@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
 import { mockOpportunities } from "@/data/mock";
 import type { Opportunity } from "@/lib/types";
 
@@ -46,34 +47,109 @@ const STATUS_LABELS: Record<Opportunity["status"], string> = {
   completed: "Completed",
 };
 
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="h-8 w-40 animate-pulse rounded bg-slate-200" />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50"
+          >
+            <div className="h-4 w-16 animate-pulse rounded bg-slate-200" />
+            <div className="mt-2 h-8 w-12 animate-pulse rounded bg-slate-200" />
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-1 rounded-lg bg-slate-100 p-1">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="h-9 w-24 animate-pulse rounded-md bg-slate-200" />
+        ))}
+      </div>
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50"
+          >
+            <div className="h-4 w-48 animate-pulse rounded bg-slate-200" />
+            <div className="mt-2 h-4 w-full animate-pulse rounded bg-slate-200" />
+            <div className="mt-2 h-4 w-3/4 animate-pulse rounded bg-slate-200" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function OpportunitiesPage() {
   const [categoryFilter, setCategoryFilter] = useState<
     Opportunity["category"] | "all"
   >("all");
-  const [statuses, setStatuses] = useState<Record<string, Opportunity["status"]>>(
-    () =>
-      Object.fromEntries(mockOpportunities.map((o) => [o.id, o.status]))
-  );
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredOpportunities = mockOpportunities.filter((o) => {
+  useEffect(() => {
+    api
+      .getOpportunities()
+      .then((res: any) => {
+        const raw = res.opportunities ?? [];
+        const mapped: Opportunity[] = raw.map((o: any) => ({
+          id: String(o.id),
+          category: (o.category ?? "content_gap") as Opportunity["category"],
+          title: String(o.title ?? ""),
+          description: String(o.description ?? ""),
+          impact: (o.impact ?? o.impact_score ?? "medium") as Opportunity["impact"],
+          status: (o.status ?? "open") as Opportunity["status"],
+          suggested_fix: String(o.suggested_fix ?? ""),
+        }));
+        setOpportunities(mapped);
+      })
+      .catch(() => {
+        setOpportunities(mockOpportunities);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filteredOpportunities = opportunities.filter((o) => {
     if (categoryFilter === "all") return true;
     return o.category === categoryFilter;
   });
 
   const stats = {
-    total: mockOpportunities.length,
-    open: mockOpportunities.filter((o) => statuses[o.id] === "open").length,
-    inProgress: mockOpportunities.filter(
-      (o) => statuses[o.id] === "in_progress"
+    total: opportunities.length,
+    open: opportunities.filter((o) => o.status === "open").length,
+    inProgress: opportunities.filter(
+      (o) => o.status === "in_progress"
     ).length,
-    completed: mockOpportunities.filter(
-      (o) => statuses[o.id] === "completed"
+    completed: opportunities.filter(
+      (o) => o.status === "completed"
     ).length,
   };
 
   const updateStatus = (id: string, status: Opportunity["status"]) => {
-    setStatuses((prev) => ({ ...prev, [id]: status }));
+    const prev = opportunities.find((o) => o.id === id);
+    if (!prev) return;
+    const previousStatus = prev.status;
+
+    setOpportunities((o) =>
+      o.map((opp) => (opp.id === id ? { ...opp, status } : opp))
+    );
+
+    api
+      .updateOpportunity(id, status)
+      .catch(() => {
+        alert("Failed to update status. Reverting.");
+        setOpportunities((o) =>
+          o.map((opp) =>
+            opp.id === id ? { ...opp, status: previousStatus } : opp
+          )
+        );
+      });
   };
+
+  if (loading) return <LoadingSkeleton />;
 
   return (
     <div className="space-y-6">
@@ -145,7 +221,7 @@ export default function OpportunitiesPage() {
                 </span>
               </div>
               <select
-                value={statuses[opp.id]}
+                value={opp.status}
                 onChange={(e) =>
                   updateStatus(opp.id, e.target.value as Opportunity["status"])
                 }

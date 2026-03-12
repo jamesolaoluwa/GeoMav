@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -10,13 +10,14 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { api } from "@/lib/api";
 import {
   mockVisibilityTrend,
   mockCompetitors,
   mockTopicRankings,
   mockQueryResponses,
 } from "@/data/mock";
-import type { TimeFilter, TopicRanking } from "@/lib/types";
+import type { TimeFilter, TopicRanking, CompetitorVisibility } from "@/lib/types";
 
 const TIME_FILTERS: { value: TimeFilter; label: string }[] = [
   { value: "all_time", label: "All Time" },
@@ -100,8 +101,94 @@ function SentimentDot({ sentiment }: { sentiment: "positive" | "neutral" | "nega
   );
 }
 
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="h-8 w-32 animate-pulse rounded bg-gray-200" />
+        <div className="h-10 w-64 animate-pulse rounded bg-gray-200" />
+      </div>
+      <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+        <div className="mb-4 h-6 w-40 animate-pulse rounded bg-gray-200" />
+        <div className="h-64 animate-pulse rounded bg-gray-200" />
+      </div>
+      <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200/50">
+        <div className="border-b border-slate-200 px-5 py-4">
+          <div className="h-6 w-28 animate-pulse rounded bg-gray-200" />
+        </div>
+        <div className="space-y-3 p-5">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div key={i} className="h-12 animate-pulse rounded bg-gray-200" />
+          ))}
+        </div>
+      </div>
+      <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200/50">
+        <div className="border-b border-slate-200 px-5 py-4">
+          <div className="h-6 w-48 animate-pulse rounded bg-gray-200" />
+        </div>
+        <div className="h-64 animate-pulse rounded bg-gray-200" />
+      </div>
+      <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200/50">
+        <div className="border-b border-slate-200 px-5 py-4">
+          <div className="h-6 w-40 animate-pulse rounded bg-gray-200" />
+        </div>
+        <div className="h-48 animate-pulse rounded bg-gray-200" />
+      </div>
+    </div>
+  );
+}
+
 export default function VisibilityPage() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all_time");
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    api
+      .getVisibility(timeFilter)
+      .then((res: any) => setData(res))
+      .catch(() => setData(null))
+      .finally(() => setLoading(false));
+  }, [timeFilter]);
+
+  const visibilityTrend =
+    data?.visibility_history?.length > 0
+      ? data.visibility_history.map((d: { date: string; score: number }) => ({
+          date: d.date,
+          score: d.score,
+        }))
+      : mockVisibilityTrend;
+
+  const brandRankings: CompetitorVisibility[] =
+    data?.brand_rankings?.length > 0
+      ? data.brand_rankings.map((r: any) => ({
+          name: r.brand ?? r.name ?? "Unknown",
+          visibility_score: r.score ?? r.visibility_score ?? 0,
+          change: r.change ?? 0,
+        }))
+      : mockCompetitors;
+
+  const topicRankings =
+    data?.topic_rankings?.length > 0 &&
+    data.topic_rankings.some((t: any) => Array.isArray(t.rankings))
+      ? (data.topic_rankings as TopicRanking[])
+      : mockTopicRankings;
+
+  const queryResponses: typeof mockQueryResponses = data?.query_responses?.length > 0
+    ? data.query_responses.map((q: { query: string; response_rate: number }, i: number) => ({
+        id: `qr-${i}`,
+        query: q.query,
+        llm_name: "ChatGPT" as const,
+        brand_mentioned: (q.response_rate || 0) > 0.5,
+        rank: null as number | null,
+        sentiment: "neutral" as const,
+      }))
+    : mockQueryResponses;
+
+  if (loading && !data) {
+    return <LoadingSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
@@ -132,7 +219,7 @@ export default function VisibilityPage() {
         </h2>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={mockVisibilityTrend}>
+            <LineChart data={visibilityTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis
                 dataKey="date"
@@ -177,7 +264,7 @@ export default function VisibilityPage() {
           </h2>
         </div>
         <div className="divide-y divide-slate-200">
-          {mockCompetitors.slice(0, 8).map((row, idx) => (
+          {brandRankings.slice(0, 8).map((row, idx) => (
             <div
               key={row.name}
               className={`flex items-center justify-between px-5 py-3 ${
@@ -228,7 +315,7 @@ export default function VisibilityPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {mockTopicRankings.map((row) => (
+              {topicRankings.map((row) => (
                 <tr key={row.topic} className="hover:bg-slate-50/50">
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
@@ -301,7 +388,7 @@ export default function VisibilityPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {mockQueryResponses.map((row) => (
+              {queryResponses.map((row) => (
                 <tr key={row.id} className="hover:bg-slate-50/50">
                   <td className="px-5 py-3 text-sm text-slate-900">
                     {row.query}

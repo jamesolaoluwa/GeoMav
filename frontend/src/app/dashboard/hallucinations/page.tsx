@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
 import { mockHallucinations } from "@/data/mock";
 import type { Claim, ClaimStatus } from "@/lib/types";
 
@@ -39,14 +40,94 @@ function StatusSelect({
   );
 }
 
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="h-8 w-48 animate-pulse rounded bg-slate-200" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50"
+          >
+            <div className="h-4 w-24 animate-pulse rounded bg-slate-200" />
+            <div className="mt-2 h-8 w-16 animate-pulse rounded bg-slate-200" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200/50">
+        <div className="border-b border-slate-200 px-5 py-4">
+          <div className="h-6 w-32 animate-pulse rounded bg-slate-200" />
+        </div>
+        <div className="overflow-x-auto p-5">
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="flex gap-4"
+              >
+                <div className="h-4 flex-1 animate-pulse rounded bg-slate-200" />
+                <div className="h-4 w-24 animate-pulse rounded bg-slate-200" />
+                <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function HallucinationsPage() {
-  const [hallucinations, setHallucinations] = useState<Claim[]>(mockHallucinations);
+  const [hallucinations, setHallucinations] = useState<Claim[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .getHallucinations()
+      .then((res: any) => {
+        const raw = res.claims ?? [];
+        const mapped: Claim[] = raw.map((c: any) => ({
+          id: String(c.id),
+          response_id: String(c.response_id ?? ""),
+          claim_type: String(c.claim_type ?? ""),
+          claim_value: String(c.claim_value ?? c.claim ?? ""),
+          verified_value: String(c.verified_value ?? c.actual ?? ""),
+          status: (c.status as ClaimStatus) ?? "pending",
+          llm_name: (c.llm_name ?? c.llm) as Claim["llm_name"],
+          query_text: String(c.query_text ?? c.query ?? ""),
+          created_at: String(c.created_at ?? ""),
+        }));
+        setHallucinations(mapped);
+      })
+      .catch(() => {
+        setHallucinations(mockHallucinations);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const updateStatus = (id: string, status: ClaimStatus) => {
-    setHallucinations((prev) =>
-      prev.map((h) => (h.id === id ? { ...h, status } : h))
+    const prev = hallucinations.find((h) => h.id === id);
+    if (!prev) return;
+    const previousStatus = prev.status;
+
+    setHallucinations((h) =>
+      h.map((item) => (item.id === id ? { ...item, status } : item))
     );
+
+    api
+      .updateHallucination(id, status)
+      .catch(() => {
+        alert("Failed to update status. Reverting.");
+        setHallucinations((h) =>
+          h.map((item) =>
+            item.id === id ? { ...item, status: previousStatus } : item
+          )
+        );
+      });
   };
+
+  if (loading) return <LoadingSkeleton />;
 
   const total = hallucinations.length;
   const pending = hallucinations.filter((h) => h.status === "pending").length;

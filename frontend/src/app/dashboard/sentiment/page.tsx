@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AreaChart,
   Area,
@@ -13,6 +13,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { api } from "@/lib/api";
 import {
   mockSentimentTrend,
   mockSentimentByLLM,
@@ -26,12 +27,34 @@ const TIME_FILTERS = [
   { value: "weekly", label: "Weekly" },
 ] as const;
 
-const sentimentStackData = mockSentimentByLLM.map((row) => ({
-  llm_name: row.llm_name,
-  positive: row.positive,
-  neutral: row.neutral,
-  negative: row.negative,
-}));
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="h-8 w-24 animate-pulse rounded bg-gray-200" />
+        <div className="h-10 w-64 animate-pulse rounded bg-gray-200" />
+      </div>
+      <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+        <div className="mb-4 h-6 w-32 animate-pulse rounded bg-gray-200" />
+        <div className="h-72 animate-pulse rounded bg-gray-200" />
+      </div>
+      <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+        <div className="mb-4 h-6 w-36 animate-pulse rounded bg-gray-200" />
+        <div className="h-72 animate-pulse rounded bg-gray-200" />
+      </div>
+      <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200/50">
+        <div className="border-b border-slate-200 px-5 py-4">
+          <div className="h-6 w-36 animate-pulse rounded bg-gray-200" />
+        </div>
+        <div className="space-y-3 p-5">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div key={i} className="h-10 animate-pulse rounded bg-gray-200" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const SENTIMENT_STYLES: Record<
   Sentiment,
@@ -46,6 +69,50 @@ export default function SentimentPage() {
   const [timeFilter, setTimeFilter] = useState<
     "all_time" | "daily" | "weekly"
   >("all_time");
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    api
+      .getSentiment(timeFilter)
+      .then((res: any) => setData(res))
+      .catch(() => setData(null))
+      .finally(() => setLoading(false));
+  }, [timeFilter]);
+
+  const toPct = (v: number) => (typeof v === "number" && v <= 1 ? v * 100 : v);
+
+  const sentimentTrend =
+    data?.sentiment_trends?.length > 0
+      ? data.sentiment_trends.map((d: { date: string; positive: number; neutral: number; negative: number }) => ({
+          date: d.date,
+          positive: toPct(d.positive),
+          neutral: toPct(d.neutral),
+          negative: toPct(d.negative),
+        }))
+      : mockSentimentTrend;
+
+  const sentimentStackData =
+    data?.sentiment_by_llm?.length > 0
+      ? data.sentiment_by_llm.map((r: { llm: string; positive: number; neutral: number; negative: number }) => ({
+          llm_name: r.llm,
+          positive: toPct(r.positive),
+          neutral: toPct(r.neutral),
+          negative: toPct(r.negative),
+        }))
+      : mockSentimentByLLM.map((row) => ({
+          llm_name: row.llm_name,
+          positive: row.positive,
+          neutral: row.neutral,
+          negative: row.negative,
+        }));
+
+  const queryResponses = mockQueryResponses;
+
+  if (loading && !data) {
+    return <LoadingSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
@@ -77,7 +144,7 @@ export default function SentimentPage() {
         </h2>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={mockSentimentTrend}>
+            <AreaChart data={sentimentTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis
                 dataKey="date"
@@ -204,7 +271,7 @@ export default function SentimentPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {mockQueryResponses.map((row) => {
+              {queryResponses.map((row) => {
                 const style = SENTIMENT_STYLES[row.sentiment];
                 return (
                   <tr key={row.id} className="hover:bg-slate-50/50">

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { api } from "@/lib/api";
 import { mockShoppingResults } from "@/data/mock";
-import type { TimeFilter, LLMName } from "@/lib/types";
+import type { TimeFilter, LLMName, ShoppingResult } from "@/lib/types";
 
 const TIME_FILTERS: { value: TimeFilter; label: string }[] = [
   { value: "all_time", label: "All Time" },
@@ -30,23 +31,83 @@ function LLMBadge({ name }: { name: LLMName }) {
   );
 }
 
+function isShoppingResultArray(arr: unknown): arr is ShoppingResult[] {
+  if (!Array.isArray(arr)) return false;
+  if (arr.length === 0) return true;
+  const first = arr[0] as ShoppingResult;
+  return typeof first?.query === "string" && typeof first?.llm_name === "string";
+}
+
 export default function ShoppingPage() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all_time");
+  const [results, setResults] = useState<ShoppingResult[]>(mockShoppingResults);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    api
+      .getShopping(timeFilter)
+      .then((data: unknown) => {
+        if (cancelled) return;
+        const d = data as Record<string, unknown>;
+        const arr = d?.results ?? d?.shopping_results ?? d?.data;
+        if (isShoppingResultArray(arr)) {
+          setResults(arr);
+        } else {
+          setResults(mockShoppingResults);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setResults(mockShoppingResults);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [timeFilter]);
 
   const { products, llms, matrix } = useMemo(() => {
-    const products = [...new Set(mockShoppingResults.map((r) => r.product_mentioned))].sort();
-    const llms = [...new Set(mockShoppingResults.map((r) => r.llm_name))].sort();
-    const productSet = new Set(products);
-    const llmSet = new Set(llms);
+    const products = [...new Set(results.map((r) => r.product_mentioned))].sort();
+    const llms = [...new Set(results.map((r) => r.llm_name))].sort();
     const matrix = new Map<string, Set<string>>();
-    mockShoppingResults.forEach((r) => {
+    results.forEach((r) => {
       if (!matrix.has(r.product_mentioned)) {
         matrix.set(r.product_mentioned, new Set());
       }
       matrix.get(r.product_mentioned)!.add(r.llm_name);
     });
     return { products, llms, matrix };
-  }, []);
+  }, [results]);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold text-slate-900">Shopping</h1>
+          <div className="flex gap-1 rounded-lg bg-slate-100 p-1 animate-pulse">
+            <div className="h-10 w-20 rounded-md bg-slate-200" />
+            <div className="h-10 w-16 rounded-md bg-slate-200" />
+            <div className="h-10 w-20 rounded-md bg-slate-200" />
+          </div>
+        </div>
+        <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+          <div className="mb-4 h-6 w-40 rounded bg-slate-200 animate-pulse" />
+          <div className="overflow-x-auto">
+            <div className="h-12 w-full rounded bg-slate-100 animate-pulse" />
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="mt-2 h-12 w-full rounded bg-slate-50 animate-pulse" />
+            ))}
+          </div>
+        </div>
+        <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+          <div className="mb-4 h-6 w-48 rounded bg-slate-200 animate-pulse" />
+          <div className="h-48 rounded bg-slate-100 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -97,7 +158,7 @@ export default function ShoppingPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {mockShoppingResults.map((row) => (
+              {results.map((row) => (
                 <tr key={row.id} className="hover:bg-slate-50/50">
                   <td className="px-5 py-3 text-sm font-medium text-slate-900">
                     {row.query}

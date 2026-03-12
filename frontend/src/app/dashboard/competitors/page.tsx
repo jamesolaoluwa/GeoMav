@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -11,6 +12,7 @@ import {
   Legend,
   Cell,
 } from "recharts";
+import { api } from "@/lib/api";
 import {
   mockCompetitors,
   mockLLMBreakdown,
@@ -20,14 +22,68 @@ import {
 const BRAND_COLOR = "#6366f1";
 const COMPETITOR_COLOR = "#94a3b8";
 
-const sentimentChartData = mockSentimentByLLM.map((row) => ({
-  llm_name: row.llm_name,
-  positive: row.positive,
-  neutral: row.neutral,
-  negative: row.negative,
-}));
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+        <div className="mb-4 h-6 w-48 animate-pulse rounded bg-gray-200" />
+        <div className="h-80 animate-pulse rounded bg-gray-200" />
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200/50">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <div className="h-6 w-36 animate-pulse rounded bg-gray-200" />
+          </div>
+          <div className="space-y-3 p-5">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 animate-pulse rounded bg-gray-200" />
+            ))}
+          </div>
+        </div>
+        <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+          <div className="mb-4 h-6 w-40 animate-pulse rounded bg-gray-200" />
+          <div className="h-80 animate-pulse rounded bg-gray-200" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function CompetitorsPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    api
+      .getCompetitors()
+      .then((res: any) => setData(res))
+      .catch(() => setData(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const competitors =
+    data?.competitors?.length > 0
+      ? data.competitors.map((c: { name: string; visibility_score: number; trend?: string }) => ({
+          name: c.name,
+          visibility_score: c.visibility_score,
+          change: c.trend === "up" ? 1 : c.trend === "down" ? -1 : 0,
+        }))
+      : mockCompetitors;
+
+  const llmBreakdown = mockLLMBreakdown;
+
+  const sentimentChartData = mockSentimentByLLM.map((row) => ({
+    llm_name: row.llm_name,
+    positive: row.positive,
+    neutral: row.neutral,
+    negative: row.negative,
+  }));
+
+  if (loading && !data) {
+    return <LoadingSkeleton />;
+  }
+
   return (
     <div className="space-y-6">
       {/* Competitor Visibility Ranking Chart */}
@@ -38,7 +94,7 @@ export default function CompetitorsPage() {
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={mockCompetitors}
+              data={competitors}
               layout="vertical"
               margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
             >
@@ -62,7 +118,7 @@ export default function CompetitorsPage() {
                 formatter={(value) => [String(value), "Visibility Score"]}
               />
               <Bar dataKey="visibility_score" name="Visibility Score" radius={[0, 4, 4, 0]}>
-                {mockCompetitors.map((entry) => (
+                {competitors.map((entry: { name: string; visibility_score: number; change: number }) => (
                   <Cell
                     key={entry.name}
                     fill={entry.name === "Your Brand" ? BRAND_COLOR : COMPETITOR_COLOR}
@@ -101,7 +157,7 @@ export default function CompetitorsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {mockLLMBreakdown.map((row, idx) => (
+                {llmBreakdown.map((row, idx) => (
                   <tr
                     key={row.llm_name}
                     className={idx % 2 === 0 ? "bg-slate-50/50" : "bg-white"}

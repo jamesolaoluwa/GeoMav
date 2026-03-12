@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
 
-const SAMPLE_BUSINESS = {
+const DEFAULT_PROFILE = {
   name: "Your Brand",
   website: "https://yourbrand.com",
   category: "Website Builder",
@@ -33,7 +34,9 @@ const NOTIFICATIONS = [
 ];
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState(SAMPLE_BUSINESS);
+  const [profile, setProfile] = useState(DEFAULT_PROFILE);
+  const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [notifications, setNotifications] = useState<Record<string, boolean>>({
@@ -42,6 +45,46 @@ export default function SettingsPage() {
     opportunity_alerts: false,
   });
 
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    api
+      .getBusiness()
+      .then((data: any) => {
+        if (cancelled) return;
+        setProfile({
+          name: String(data?.name ?? DEFAULT_PROFILE.name),
+          website: String(data?.website ?? DEFAULT_PROFILE.website),
+          category: String(data?.category ?? DEFAULT_PROFILE.category),
+          description: String(data?.description ?? DEFAULT_PROFILE.description),
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setProfile(DEFAULT_PROFILE);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleSaveProfile = async () => {
+    setSaveStatus("saving");
+    try {
+      await api.updateBusiness({
+        name: profile.name,
+        website: profile.website,
+        category: profile.category,
+      });
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch {
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    }
+  };
+
   const toggleShowKey = (id: string) => {
     setShowKeys((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -49,6 +92,41 @@ export default function SettingsPage() {
   const toggleNotification = (id: string) => {
     setNotifications((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-semibold text-slate-900">Settings</h1>
+        <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+          <div className="mb-4 h-6 w-40 rounded bg-slate-200 animate-pulse" />
+          <div className="space-y-4">
+            <div className="h-10 rounded-lg bg-slate-100 animate-pulse" />
+            <div className="h-10 rounded-lg bg-slate-100 animate-pulse" />
+            <div className="h-10 rounded-lg bg-slate-100 animate-pulse" />
+            <div className="h-24 rounded-lg bg-slate-100 animate-pulse" />
+            <div className="h-10 w-32 rounded-lg bg-slate-200 animate-pulse" />
+          </div>
+        </div>
+        <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+          <div className="mb-4 h-6 w-24 rounded bg-slate-200 animate-pulse" />
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-10 rounded-lg bg-slate-100 animate-pulse" />
+            ))}
+            <div className="h-10 w-28 rounded-lg bg-slate-200 animate-pulse" />
+          </div>
+        </div>
+        <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+          <div className="mb-4 h-6 w-32 rounded bg-slate-200 animate-pulse" />
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-14 rounded-lg bg-slate-100 animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -135,9 +213,11 @@ export default function SettingsPage() {
           </div>
           <button
             type="button"
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+            onClick={handleSaveProfile}
+            disabled={saveStatus === "saving"}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:opacity-70"
           >
-            Save Profile
+            {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved!" : saveStatus === "error" ? "Error" : "Save Profile"}
           </button>
         </div>
       </div>

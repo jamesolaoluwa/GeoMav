@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
 import { mockPrompts } from "@/data/mock";
 import type { Prompt } from "@/lib/types";
 
@@ -34,29 +35,79 @@ function formatDate(iso: string) {
   });
 }
 
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="h-8 w-32 animate-pulse rounded bg-slate-200" />
+        <div className="h-10 w-28 animate-pulse rounded bg-slate-200" />
+      </div>
+      <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200/50">
+        <div className="overflow-x-auto p-5">
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="flex gap-4">
+                <div className="h-4 flex-1 animate-pulse rounded bg-slate-200" />
+                <div className="h-4 w-20 animate-pulse rounded bg-slate-200" />
+                <div className="h-4 w-24 animate-pulse rounded bg-slate-200" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PromptsPage() {
-  const [prompts, setPrompts] = useState<Prompt[]>(mockPrompts);
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newText, setNewText] = useState("");
   const [newCategory, setNewCategory] = useState<string>(CATEGORIES[0]);
 
+  useEffect(() => {
+    api
+      .getPrompts()
+      .then((res: any) => {
+        setPrompts(res.prompts ?? []);
+      })
+      .catch(() => {
+        setPrompts(mockPrompts);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   const handleAdd = () => {
     if (!newText.trim()) return;
-    const prompt: Prompt = {
-      id: `p${Date.now()}`,
-      text: newText.trim(),
-      category: newCategory,
-      created_at: new Date().toISOString(),
-    };
-    setPrompts((prev) => [prompt, ...prev]);
-    setNewText("");
-    setNewCategory(CATEGORIES[0]);
-    setShowAddForm(false);
+    const text = newText.trim();
+    const category = newCategory;
+
+    api
+      .addPrompt(text, category)
+      .then((res: any) => {
+        const created = res.prompt ?? { id: `p${Date.now()}`, text, category, created_at: new Date().toISOString() };
+        setPrompts((prev) => [created, ...prev]);
+        setNewText("");
+        setNewCategory(CATEGORIES[0]);
+        setShowAddForm(false);
+      })
+      .catch(() => {
+        alert("Failed to add prompt.");
+      });
   };
 
   const handleDelete = (id: string) => {
-    setPrompts((prev) => prev.filter((p) => p.id !== id));
+    const prev = prompts;
+    setPrompts((p) => p.filter((prompt) => prompt.id !== id));
+
+    api.deletePrompt(id).catch(() => {
+      alert("Failed to delete prompt. Reverting.");
+      setPrompts(prev);
+    });
   };
+
+  if (loading) return <LoadingSkeleton />;
 
   return (
     <div className="space-y-6">
