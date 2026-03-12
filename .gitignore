@@ -24,6 +24,10 @@ yarn-error.log*
 # private keys
 *.pem
 
+# claude / cursor project metadata (editor-only)
+.claude/
+.cursor/
+
 # typescript
 *.tsbuildinfo
 
