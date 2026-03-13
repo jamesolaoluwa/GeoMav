@@ -445,6 +445,7 @@ export default function DashboardLayout({
           </nav>
 
           <div className="border-t border-white/10 p-4">
+          <div className={`border-t border-white/10 ${collapsed ? "px-2 py-4" : "p-4"}`}>
             <button
               type="button"
               onClick={handleLogout}
