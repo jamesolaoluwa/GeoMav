@@ -166,6 +166,8 @@ async def query_llm(llm_name: str, prompt: str, api_key: Optional[str] = None) -
 async def run_analytics_scan(
     prompts: list[str],
     business_name: str = "Your Brand",
+    business_id: Optional[str] = None,
+    query_ids: Optional[list[str]] = None,
     supabase_client=None,
 ) -> dict:
     """
@@ -188,7 +190,7 @@ async def run_analytics_scan(
 
     brand_keywords = [business_name.lower(), business_name.lower().replace(" ", "")]
 
-    async def _process_one(prompt_text: str, llm_name: str, api_key: str) -> dict:
+    async def _process_one(prompt_text: str, llm_name: str, api_key: str, query_id: Optional[str] = None) -> dict:
         try:
             response_text = await query_llm(llm_name, prompt_text, api_key)
         except Exception as exc:
@@ -211,23 +213,27 @@ async def run_analytics_scan(
             try:
                 supabase_client.table("llm_responses").insert({
                     "id": result["id"],
-                    "query_id": None,
+                    "query_id": query_id,
                     "llm_name": llm_name,
                     "response_text": response_text,
                 }).execute()
-                supabase_client.table("mentions").insert({
+                mention_row: dict = {
                     "response_id": result["id"],
                     "rank": mention_data["rank"],
                     "sentiment": mention_data["sentiment"],
-                }).execute()
+                }
+                if business_id:
+                    mention_row["business_id"] = business_id
+                supabase_client.table("mentions").insert(mention_row).execute()
             except Exception:
                 pass
 
         return result
 
+    _query_ids = query_ids or [None] * len(prompts)
     tasks = [
-        _process_one(prompt_text, llm_name, api_key)
-        for prompt_text in prompts
+        _process_one(prompt_text, llm_name, api_key, qid)
+        for (prompt_text, qid) in zip(prompts, _query_ids)
         for llm_name, api_key in llm_configs.items()
     ]
     results = await asyncio.gather(*tasks)

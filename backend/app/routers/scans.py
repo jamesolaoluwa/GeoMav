@@ -19,28 +19,51 @@ async def _run_scan_task(business_id: str):
 
         supabase = get_supabase()
 
-        biz = supabase.table("businesses").select("name, user_id").eq("id", business_id).limit(1).execute()
-        business_name = biz.data[0]["name"] if biz.data else "Your Brand"
-        user_id = biz.data[0].get("user_id") if biz.data else None
+        biz = supabase.table("businesses").select("*").eq("id", business_id).limit(1).execute()
+        biz_profile = biz.data[0] if biz.data else {}
+        business_name = biz_profile.get("name", "Your Brand")
+        user_id = biz_profile.get("user_id")
 
         prompts_res = (
             supabase.table("queries")
-            .select("text")
+            .select("id, text")
             .eq("business_id", business_id)
             .execute()
         )
-        prompt_texts = [p["text"] for p in (prompts_res.data or [])]
+        queries = prompts_res.data or []
+        prompt_texts = [q["text"] for q in queries]
+        query_id_list = [q["id"] for q in queries]
 
         if not prompt_texts:
             prompt_texts = ["What are the best options for this type of business?"]
+            query_id_list = [None]
 
         scan_start = datetime.now(timezone.utc).isoformat()
 
-        await run_analytics_scan(
+        scan_result = await run_analytics_scan(
             prompts=prompt_texts,
             business_name=business_name,
+            business_id=business_id,
+            query_ids=query_id_list,
             supabase_client=supabase,
         )
+
+        try:
+            from app.agents.enrichment import run_enrichment
+            await run_enrichment(business=biz_profile, business_id=business_id, supabase_client=supabase)
+        except Exception as exc:
+            logger.warning("Enrichment failed: %s", exc)
+
+        try:
+            from app.agents.reinforcement import run_reinforcement
+            await run_reinforcement(
+                llm_responses=scan_result.get("results", []),
+                business_profile=biz_profile,
+                business_id=business_id,
+                supabase_client=supabase,
+            )
+        except Exception as exc:
+            logger.warning("Reinforcement failed: %s", exc)
 
         _post_scan_alerts(supabase, user_id, scan_start)
         _post_scan_snapshot(supabase, business_id)

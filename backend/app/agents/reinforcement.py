@@ -132,6 +132,7 @@ def generate_correction(claim: dict, classification: dict) -> Optional[dict]:
 async def run_reinforcement(
     llm_responses: list[dict],
     business_profile: dict,
+    business_id: Optional[str] = None,
     supabase_client=None,
 ) -> dict:
     """
@@ -147,6 +148,7 @@ async def run_reinforcement(
     stats = {"verified": 0, "outdated": 0, "fabricated": 0, "misleading": 0}
 
     for response in llm_responses:
+        response_id = response.get("id")
         claims = extract_claims(response.get("response_text", ""))
 
         for claim in claims:
@@ -172,6 +174,7 @@ async def run_reinforcement(
 
             correction = generate_correction(claim, classification)
             if correction:
+                correction["response_id"] = response_id
                 correction["llm_name"] = response.get("llm_name", "Unknown")
                 correction["query_text"] = response.get("query_text", "")
                 corrections.append(correction)
@@ -181,7 +184,7 @@ async def run_reinforcement(
             for correction in corrections:
                 supabase_client.table("claims").insert({
                     "id": correction["id"],
-                    "response_id": None,
+                    "response_id": correction.get("response_id"),
                     "claim_type": correction["claim_type"],
                     "claim_value": correction["claim_value"],
                     "verified_value": correction["verified_value"],

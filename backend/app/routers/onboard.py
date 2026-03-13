@@ -502,13 +502,15 @@ async def run_initial_scan(req: OnboardScanRequest, background_tasks: Background
         business = biz_result.data[0]
 
         # Get queries for this business
-        queries_result = supabase.table("queries").select("text").eq("business_id", req.business_id).execute()
-        prompts = [q["text"] for q in (queries_result.data or [])]
+        queries_result = supabase.table("queries").select("id, text").eq("business_id", req.business_id).execute()
+        all_queries = queries_result.data or []
 
-        if not prompts:
-            prompts = [f"best {business.get('category', 'business')} near me"]
+        if not all_queries:
+            all_queries = [{"id": None, "text": f"best {business.get('category', 'business')} near me"}]
 
-        scan_prompts = prompts[:10]
+        scan_queries = all_queries[:10]
+        scan_prompts = [q["text"] for q in scan_queries]
+        scan_query_ids = [q["id"] for q in scan_queries]
 
         from app.agents.analytics import run_analytics_scan
 
@@ -517,6 +519,8 @@ async def run_initial_scan(req: OnboardScanRequest, background_tasks: Background
                 result = await run_analytics_scan(
                     prompts=scan_prompts,
                     business_name=business.get("name", ""),
+                    business_id=req.business_id,
+                    query_ids=scan_query_ids,
                     supabase_client=supabase,
                 )
                 logger.info(f"Initial scan complete: {result.get('visibility_score', 0)}% visibility")
