@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import Logo from "@/components/ui/Logo";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // STORY — edit everything in this block to change the demo narrative
@@ -733,9 +734,16 @@ export default function DemoPage() {
   }, [scene]);
 
   return (
-    <div className="relative min-h-screen bg-[#0d0816] text-white">
+    <div className="relative min-h-screen text-white">
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          background:
+            "linear-gradient(180deg, var(--color-hero) 0%, var(--color-page) 55%, #f7f5fb 100%)",
+        }}
+      />
       {/* Progress bar */}
-      <div className="fixed left-0 right-0 top-0 z-50 h-0.5 bg-white/[0.08]">
+      <div className="fixed left-0 right-0 top-0 z-50 h-0.5 bg-card-lavender/20">
         <motion.div
           className="h-full bg-[#8B7CB5]"
           animate={{ width: `${((scene + 1) / TOTAL_SCENES) * 100}%` }}
@@ -745,7 +753,7 @@ export default function DemoPage() {
 
       {/* Demo mode badge */}
       <div className="fixed left-1/2 top-4 z-50 -translate-x-1/2">
-        <div className="flex items-center gap-2 rounded-full border border-[#8B7CB5]/25 bg-[#1a1225]/90 px-4 py-1.5 backdrop-blur-lg">
+        <div className="flex items-center gap-2 rounded-full border border-card-lavender/30 bg-white/85 px-4 py-1.5 backdrop-blur-lg">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#8B7CB5]" />
           <span className="text-xs font-semibold uppercase tracking-widest text-[#8B7CB5]">
             Demo Mode
@@ -755,14 +763,14 @@ export default function DemoPage() {
 
       {/* GeoMav home link */}
       <div className="fixed left-6 top-[18px] z-50">
-        <Link href="/" className="text-sm font-semibold text-white/35 transition hover:text-white/65">
-          GeoMav
-        </Link>
+        <Logo
+          className="opacity-60 transition hover:opacity-90 [&_img]:h-7 [&_img]:w-auto md:[&_img]:h-8"
+        />
       </div>
 
       {/* Scene content */}
       <main className="flex min-h-screen items-center justify-center px-4 py-28">
-        <div className="w-full max-w-4xl">
+        <div className="w-full max-w-4xl rounded-[28px] border border-white/70 bg-[#120d1f]/92 p-6 shadow-[0_24px_70px_rgba(41,28,59,0.26)] backdrop-blur-sm md:p-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={scene}
@@ -786,11 +794,11 @@ export default function DemoPage() {
 
       {/* Bottom nav controls */}
       <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2">
-        <div className="flex items-center gap-5 rounded-2xl border border-white/[0.08] bg-[#0d0816]/90 px-6 py-3 shadow-xl backdrop-blur-xl">
+        <div className="flex items-center gap-5 rounded-2xl border border-card-lavender/30 bg-white/88 px-6 py-3 shadow-xl backdrop-blur-xl">
           <button
             onClick={prev}
             disabled={scene === 0}
-            className="text-sm text-white/40 transition hover:text-white/80 disabled:opacity-20"
+            className="text-sm text-heading/50 transition hover:text-heading/85 disabled:opacity-20"
           >
             ← Prev
           </button>
@@ -803,7 +811,7 @@ export default function DemoPage() {
                 className={`rounded-full transition-all duration-300 ${
                   i === scene
                     ? "h-1.5 w-5 bg-[#8B7CB5]"
-                    : "h-1.5 w-1.5 bg-white/20 hover:bg-white/40"
+                    : "h-1.5 w-1.5 bg-heading/20 hover:bg-heading/35"
                 }`}
               />
             ))}
@@ -812,7 +820,7 @@ export default function DemoPage() {
           <button
             onClick={next}
             disabled={scene === TOTAL_SCENES - 1}
-            className="text-sm text-white/40 transition hover:text-white/80 disabled:opacity-20"
+            className="text-sm text-heading/50 transition hover:text-heading/85 disabled:opacity-20"
           >
             Next →
           </button>

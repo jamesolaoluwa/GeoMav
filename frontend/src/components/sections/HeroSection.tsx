@@ -147,7 +147,7 @@ export default function HeroSection() {
           variants={fadeUp}
           className="mx-auto mt-5 max-w-[480px] text-[0.95rem] leading-relaxed text-body md:text-[1.05rem]"
         >
-          Track how ChatGPT, Gemini, Claude, and Perplexity represent your
+          Track how tools like ChatGPT, Gemini, Claude, and Perplexity represent your
           business. Detect hallucinations, fix inaccuracies, and improve your
           ranking in AI-powered discovery.
         </motion.p>
