@@ -6,17 +6,28 @@ GeoMav is an AI visibility monitoring platform that tracks how AI assistants (Ch
 
 ## Features
 
-✅ **AI Visibility Monitoring** — Track how your brand appears across ChatGPT, Gemini, Claude, Perplexity, Bing, and DeepSeek
+1. **AI Visibility Monitoring** — Track how your brand appears across ChatGPT, Gemini, Claude, Perplexity, Bing, and DeepSeek
+<img width="1917" height="993" alt="image" src="https://github.com/user-attachments/assets/f62f1b58-80f9-428d-a70f-817ac08cffcc" />
 
-✅ **Hallucination Detection** — Automatically extract and flag incorrect claims AI makes about your business
 
-✅ **Sentiment & Competitor Analysis** — View sentiment trends, competitor rankings, and visibility by topic
+2. **Hallucination Detection** — Automatically extract and flag incorrect claims AI makes about your business
+<img width="1929" height="991" alt="image" src="https://github.com/user-attachments/assets/9b1733e3-b87c-4500-8e13-3d4399380b80" />
 
-✅ **Query Response Explorer** — Inspect how each LLM responds to your queries, with brand mention, rank, and sentiment
 
-✅ **Content Optimization** — Generate AI-optimized summaries, JSON-LD, and `/llms.txt` for better AI representation
+4. **Sentiment & Competitor Analysis** — View sentiment trends, competitor rankings, and visibility by topic
+<img width="1928" height="991" alt="image" src="https://github.com/user-attachments/assets/5e8d2625-1190-4f58-8e38-3e50167c4bec" />
 
-✅ **User-Friendly Dashboard** — Navigate visibility, hallucinations, prompts, opportunities, and analytics in one place
+
+5. **Query Response Explorer** — Inspect how each LLM responds to your queries, with brand mention, rank, and sentiment
+<img width="1923" height="989" alt="image" src="https://github.com/user-attachments/assets/486c99b4-e2c3-4189-8a07-79bed58a8d09" />
+
+
+6. **Content Optimization** — Generate AI-optimized summaries, JSON-LD, and `/llms.txt` for better AI representation
+<img width="1925" height="992" alt="image" src="https://github.com/user-attachments/assets/448bc495-deeb-480e-8bf7-466b55207e16" />
+
+
+**User-Friendly Dashboard** — Navigate visibility, hallucinations, prompts, opportunities, and analytics in one place
+<img width="1921" height="992" alt="image" src="https://github.com/user-attachments/assets/57937997-40dc-4816-be65-828e554a8a6b" />
 
 ---
 
@@ -53,27 +64,12 @@ GeoMav is an AI visibility monitoring platform that tracks how AI assistants (Ch
 
 ## Dashboard
 
-### Visibility Rankings By Topic
+### Visibility Rankings By Topic & Query Response Explorer
+<img width="1927" height="990" alt="image" src="https://github.com/user-attachments/assets/ec44c3c3-04ce-4f80-9a8a-b161221b7d1d" />
 
-| TOPICS      | #1 | #2 | #3 | #4 | #5 | #6 | #7 | #8 | #9 | #10 |
-|-------------|----|----|----|----|----|----|----|----|-----|-----|
-| (per topic) |    |    |    |    |    |    |    |    |     |     |
 
-Shows where your brand ranks across topics and queries.
+Shows where your brand ranks across topics and queries and Explores how each LLM responds to your queries, with brand mention status, rank, and sentiment (Positive / Neutral / Negative).
 
-### Query Response Explorer
-
-| QUERY                         | LLM     | BRAND MENTION | RANK | SENTIMENT |
-|-------------------------------|---------|---------------|------|-----------|
-| best business near me         | ChatGPT | ✓             | —    | Neutral   |
-| best business 2026            | ChatGPT | ✓             | —    | Neutral   |
-| top business services         | ChatGPT | ✓             | —    | Neutral   |
-| affordable business           | ChatGPT | ✓             | —    | Neutral   |
-| ...                           | ...     | ...           | ...  | ...       |
-
-Explores how each LLM responds to your queries, with brand mention status, rank, and sentiment (Positive / Neutral / Negative).
-
----
 
 ## Quick Start
 
