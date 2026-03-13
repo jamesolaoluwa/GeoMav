@@ -4,6 +4,13 @@ import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import type { EthicsFlag } from "@/lib/types";
 
+type EthicsSummary = {
+  total?: number;
+  open?: number;
+  acknowledged?: number;
+  resolved?: number;
+};
+
 const SEVERITY_STYLES: Record<string, string> = {
   low: "bg-slate-100 text-slate-700 border-slate-200",
   medium: "bg-amber-100 text-amber-800 border-amber-200",
@@ -43,15 +50,15 @@ function LoadingSkeleton() {
 
 export default function EthicsPage() {
   const [flags, setFlags] = useState<EthicsFlag[]>([]);
-  const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
+  const [summary, setSummary] = useState<EthicsSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api
       .getEthicsFlags()
       .then((res) => {
-        const r = res as { flags?: EthicsFlag[]; summary?: Record<string, unknown> };
-        setFlags((r.flags || []) as EthicsFlag[]);
+        const r = res as { flags?: EthicsFlag[]; summary?: EthicsSummary };
+        setFlags(r.flags || []);
         setSummary(r.summary || null);
       })
       .catch(() => {})
