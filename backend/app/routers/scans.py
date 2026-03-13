@@ -87,10 +87,8 @@ async def _run_scan_task(business_id: str):
             prompts=prompt_texts,
             business_name=business_name,
             business_id=business_id,
-            query_ids=query_id_list,
-            supabase_client=supabase,
             query_ids=query_ids,
-            business_id=business_id,
+            supabase_client=supabase,
         )
 
         llm_response_dicts = [
