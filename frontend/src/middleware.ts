@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
           });
         },
       },
-    }
+    },
   );
 
   const {
@@ -26,7 +26,8 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isAuthRoute = pathname.startsWith("/signin") || pathname.startsWith("/signup");
+  const isAuthRoute =
+    pathname.startsWith("/signin") || pathname.startsWith("/signup");
   const isDashboardRoute = pathname.startsWith("/dashboard");
   const isOnboardingRoute = pathname.startsWith("/onboarding");
 
@@ -37,7 +38,8 @@ export async function middleware(request: NextRequest) {
 
   // Authenticated users on auth pages -- check if they have a business already
   if (isAuthRoute && user) {
-    const hasOnboarded = request.cookies.get("geomav_onboarded")?.value === "true";
+    const hasOnboarded =
+      request.cookies.get("geomav_onboarded")?.value === "true";
     if (hasOnboarded) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }

@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 
@@ -19,7 +20,7 @@ MOCK_PROFILE = {
 
 
 @router.get("/user/profile")
-def get_user_profile(user_id: str | None = None):
+def get_user_profile(user_id: Optional[str] = None):
     """Returns user metadata from Supabase Auth. Falls back to dummy data on error."""
     if not user_id:
         return MOCK_PROFILE
