@@ -562,8 +562,6 @@ async def run_initial_scan(req: OnboardScanRequest, background_tasks: Background
                     business_id=req.business_id,
                     query_ids=scan_query_ids,
                     supabase_client=supabase,
-                    query_ids=scan_query_ids,
-                    business_id=req.business_id,
                 )
                 logger.info(f"Initial scan complete: {result.get('visibility_score', 0)}% visibility")
 
