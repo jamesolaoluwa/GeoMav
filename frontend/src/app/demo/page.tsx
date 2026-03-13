@@ -109,9 +109,9 @@ const SCENE_DURATIONS: Record<number, number> = {
 
 function ClaimBadge({ type }: { type: string }) {
   const styles: Record<string, string> = {
-    Fabricated: "bg-red-900/40 text-red-300 border-red-700/40",
-    Outdated:   "bg-amber-900/40 text-amber-300 border-amber-700/40",
-    Misleading: "bg-orange-900/40 text-orange-300 border-orange-700/40",
+    Fabricated: "bg-red-50/80 text-red-700 border-red-200/60 backdrop-blur-sm",
+    Outdated:   "bg-amber-50/80 text-amber-800 border-amber-200/60 backdrop-blur-sm",
+    Misleading: "bg-orange-50/80 text-orange-700 border-orange-200/60 backdrop-blur-sm",
   };
   return (
     <span className={`whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium ${styles[type] ?? styles.Fabricated}`}>
@@ -126,8 +126,8 @@ function SceneIntro({ onStart }: { onStart: () => void }) {
   return (
     <div className="flex flex-col items-center text-center">
       <div className="relative mb-8">
-        <div className="absolute inset-0 animate-ping rounded-full bg-[#8B7CB5]/15" />
-        <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-[#8B7CB5]/15 ring-1 ring-[#8B7CB5]/30">
+        <div className="absolute inset-0 animate-ping rounded-full bg-[#8B7CB5]/20" />
+        <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-white/60 bg-white/50 shadow-sm backdrop-blur-md">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#8B7CB5" strokeWidth="1.5">
             <circle cx="12" cy="12" r="3" />
             <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
@@ -137,33 +137,33 @@ function SceneIntro({ onStart }: { onStart: () => void }) {
         </div>
       </div>
 
-      <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+      <h1 className="text-4xl font-bold tracking-tight text-slate-800 sm:text-5xl">
         What does AI say<br />
-        <span className="text-[#8B7CB5]">about your business?</span>
+        <span className="text-[#7B6B9B]">about your business?</span>
       </h1>
 
-      <p className="mx-auto mt-5 max-w-lg text-lg text-white/50">
+      <p className="mx-auto mt-5 max-w-lg text-lg text-slate-600">
         Follow one restaurant&apos;s journey — from invisible and misrepresented,
         to accurately found by every AI assistant on the internet.
       </p>
 
-      <div className="mt-10 flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-6 py-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#8B7CB5]/20 text-2xl">
+      <div className="mt-10 flex items-center gap-4 rounded-2xl border border-white/60 bg-white/50 px-6 py-4 shadow-sm backdrop-blur-md">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#8B7CB5]/15 text-2xl">
           {BUSINESS.emoji}
         </div>
         <div className="text-left">
-          <p className="font-semibold text-white">{BUSINESS.name}</p>
-          <p className="text-sm text-white/50">{BUSINESS.tagline}</p>
+          <p className="font-semibold text-slate-800">{BUSINESS.name}</p>
+          <p className="text-sm text-slate-600">{BUSINESS.tagline}</p>
         </div>
       </div>
 
       <button
         onClick={onStart}
-        className="mt-8 rounded-xl bg-[#8B7CB5] px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#8B7CB5]/25 transition hover:bg-[#9d8ec8] active:scale-95"
+        className="mt-8 rounded-xl bg-[#8B7CB5] px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-[#8B7CB5]/20 transition hover:bg-[#9d8ec8] hover:shadow-lg active:scale-95"
       >
         Watch the story →
       </button>
-      <p className="mt-3 text-xs text-white/25">Auto-advances · Use controls below to navigate</p>
+      <p className="mt-3 text-xs text-slate-500">Auto-advances · Use controls below to navigate</p>
     </div>
   );
 }
@@ -174,31 +174,31 @@ function SceneProblem() {
   return (
     <div>
       <div className="mb-8 text-center">
-        <span className="rounded-full bg-red-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-red-400">
+        <span className="rounded-full border border-red-200/60 bg-red-50/70 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-red-600 backdrop-blur-sm">
           The Problem
         </span>
-        <h2 className="mt-4 text-3xl font-bold">
+        <h2 className="mt-4 text-3xl font-bold text-slate-800">
           Someone searched for {BUSINESS.name}.<br />
-          <span className="text-red-400">This is what AI told them.</span>
+          <span className="text-red-600">This is what AI told them.</span>
         </h2>
-        <p className="mt-3 text-sm text-white/35 italic">{BUSINESS.story}</p>
+        <p className="mt-3 text-sm italic text-slate-600">{BUSINESS.story}</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3 mb-6">
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
         {LLM_SCANS.slice(0, 3).map((s, i) => (
           <motion.div
             key={s.llm}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.15 }}
-            className="rounded-2xl border border-red-500/20 bg-red-950/30 p-4"
+            className="rounded-2xl border border-red-200/50 bg-red-50/40 p-4 backdrop-blur-md"
           >
             <div className="mb-3 flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.dot }} />
-              <span className="text-sm font-semibold text-white/80">{s.llm}</span>
-              <span className="ml-auto text-xs text-red-400">⚠ Wrong</span>
+              <span className="text-sm font-semibold text-slate-800">{s.llm}</span>
+              <span className="ml-auto text-xs text-red-600">⚠ Wrong</span>
             </div>
-            <p className="text-sm leading-relaxed text-white/55 italic">&ldquo;{s.bad}&rdquo;</p>
+            <p className="text-sm leading-relaxed italic text-slate-600">&ldquo;{s.bad}&rdquo;</p>
           </motion.div>
         ))}
       </div>
@@ -207,9 +207,9 @@ function SceneProblem() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.55 }}
-        className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"
+        className="rounded-2xl border border-white/60 bg-white/50 p-5 backdrop-blur-md"
       >
-        <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-white/30">
+        <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
           The reality
         </p>
         <div className="flex flex-wrap justify-center gap-2">
@@ -223,7 +223,7 @@ function SceneProblem() {
           ].map((f) => (
             <span
               key={f}
-              className="rounded-full border border-emerald-500/25 bg-emerald-950/30 px-3 py-1 text-xs font-medium text-emerald-400"
+              className="rounded-full border border-emerald-200/60 bg-emerald-50/70 px-3 py-1 text-xs font-medium text-emerald-700 backdrop-blur-sm"
             >
               {f}
             </span>
@@ -240,11 +240,11 @@ function SceneScan({ scannedCount }: { scannedCount: number }) {
   return (
     <div>
       <div className="mb-8 text-center">
-        <span className="rounded-full bg-[#8B7CB5]/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#8B7CB5]">
+        <span className="rounded-full border border-[#8B7CB5]/30 bg-[#8B7CB5]/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#7B6B9B] backdrop-blur-sm">
           Scanning
         </span>
-        <h2 className="mt-4 text-3xl font-bold">GeoMav queries every AI platform.</h2>
-        <p className="mt-3 text-white/50">Extracting every claim made about {BUSINESS.name}.</p>
+        <h2 className="mt-4 text-3xl font-bold text-slate-800">GeoMav queries every AI platform.</h2>
+        <p className="mt-3 text-slate-600">Extracting every claim made about {BUSINESS.name}.</p>
       </div>
 
       <div className="space-y-2.5">
@@ -255,45 +255,45 @@ function SceneScan({ scannedCount }: { scannedCount: number }) {
             <motion.div
               key={s.llm}
               initial={{ opacity: 0, x: -16 }}
-              animate={{ opacity: done || active ? 1 : 0.25, x: 0 }}
+              animate={{ opacity: done || active ? 1 : 0.4, x: 0 }}
               transition={{ delay: i * 0.06 }}
-              className={`flex items-start gap-4 rounded-xl border px-4 py-3.5 transition-colors ${
+              className={`flex items-start gap-4 rounded-xl border px-4 py-3.5 backdrop-blur-md transition-colors ${
                 done
-                  ? "border-red-500/30 bg-red-950/20"
+                  ? "border-red-200/60 bg-red-50/50"
                   : active
-                  ? "border-[#8B7CB5]/40 bg-[#8B7CB5]/[0.08]"
-                  : "border-white/5"
+                  ? "border-[#8B7CB5]/40 bg-white/60"
+                  : "border-white/40 bg-white/30"
               }`}
             >
               <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center">
                 {done ? (
-                  <svg className="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" d="M12 9v4m0 4h.01" />
                     <path strokeLinecap="round" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                   </svg>
                 ) : active ? (
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#8B7CB5]/30 border-t-[#8B7CB5]" />
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#8B7CB5]/40 border-t-[#8B7CB5]" />
                 ) : (
-                  <div className="h-2 w-2 rounded-full bg-white/15" />
+                  <div className="h-2 w-2 rounded-full bg-slate-300" />
                 )}
               </div>
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full" style={{ background: s.dot }} />
-                  <span className="text-sm font-semibold text-white/80">{s.llm}</span>
+                  <span className="text-sm font-semibold text-slate-800">{s.llm}</span>
                   {active && (
-                    <span className="animate-pulse text-xs text-[#8B7CB5]">Querying…</span>
+                    <span className="animate-pulse text-xs text-[#7B6B9B]">Querying…</span>
                   )}
                 </div>
                 {done && (
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="mt-1 text-xs text-red-300/70"
+                    className="mt-1 text-xs text-red-600"
                   >
                     ⚠ Detected:{" "}
-                    <span className="font-medium text-red-300">{s.claim}</span>
+                    <span className="font-medium">{s.claim}</span>
                   </motion.p>
                 )}
               </div>
@@ -307,12 +307,12 @@ function SceneScan({ scannedCount }: { scannedCount: number }) {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="mt-5 rounded-xl border border-red-500/30 bg-red-950/30 p-4 text-center"
+          className="mt-5 rounded-xl border border-red-200/60 bg-red-50/60 p-4 text-center backdrop-blur-md"
         >
-          <p className="text-2xl font-bold text-red-400">
+          <p className="text-2xl font-bold text-red-600">
             {LLM_SCANS.length} hallucinations detected
           </p>
-          <p className="mt-1 text-sm text-white/35">
+          <p className="mt-1 text-sm text-slate-600">
             across all {LLM_SCANS.length} AI platforms
           </p>
         </motion.div>
@@ -327,30 +327,30 @@ function SceneIssues() {
   return (
     <div>
       <div className="mb-8 text-center">
-        <span className="rounded-full bg-red-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-red-400">
+        <span className="rounded-full border border-red-200/60 bg-red-50/70 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-red-600 backdrop-blur-sm">
           Issues Found
         </span>
-        <h2 className="mt-4 text-3xl font-bold">Every AI. Every claim. Classified.</h2>
-        <p className="mt-3 text-white/50">
+        <h2 className="mt-4 text-3xl font-bold text-slate-800">Every AI. Every claim. Classified.</h2>
+        <p className="mt-3 text-slate-600">
           GeoMav extracted and verified each incorrect claim against the verified business profile.
         </p>
       </div>
 
-      <div className="mb-5 overflow-hidden rounded-2xl border border-white/10">
+      <div className="mb-5 overflow-hidden rounded-2xl border border-white/60 bg-white/50 backdrop-blur-md">
         <table className="min-w-full">
-          <thead className="bg-white/[0.04]">
+          <thead className="bg-white/60">
             <tr>
               {["Platform", "Claim", "Type", "Correction"].map((h) => (
                 <th
                   key={h}
-                  className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-white/30"
+                  className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-slate-500"
                 >
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-white/60">
             {LLM_SCANS.map((s, i) => (
               <motion.tr
                 key={s.llm}
@@ -361,14 +361,14 @@ function SceneIssues() {
                 <td className="whitespace-nowrap px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full" style={{ background: s.dot }} />
-                    <span className="text-sm font-medium text-white/80">{s.llm}</span>
+                    <span className="text-sm font-medium text-slate-800">{s.llm}</span>
                   </div>
                 </td>
-                <td className="max-w-[180px] px-4 py-3 text-sm text-red-300/80">{s.claim}</td>
+                <td className="max-w-[180px] px-4 py-3 text-sm text-red-600">{s.claim}</td>
                 <td className="whitespace-nowrap px-4 py-3">
                   <ClaimBadge type={s.type} />
                 </td>
-                <td className="max-w-[200px] px-4 py-3 text-sm text-emerald-400/70">{s.good}</td>
+                <td className="max-w-[200px] px-4 py-3 text-sm text-emerald-700">{s.good}</td>
               </motion.tr>
             ))}
           </tbody>
@@ -379,12 +379,12 @@ function SceneIssues() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="flex items-center gap-3 rounded-xl border border-[#8B7CB5]/30 bg-[#8B7CB5]/[0.08] px-5 py-3.5"
+        className="flex items-center gap-3 rounded-xl border border-[#8B7CB5]/30 bg-[#8B7CB5]/10 px-5 py-3.5 backdrop-blur-md"
       >
         <svg className="h-4 w-4 shrink-0 text-[#8B7CB5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
-        <p className="text-sm text-white/55">
+        <p className="text-sm text-slate-700">
           GeoMav is generating corrections — structured data, /llms.txt, and FAQ schemas for every platform.
         </p>
       </motion.div>
@@ -400,13 +400,13 @@ function SceneFix({ typedText }: { typedText: string }) {
   return (
     <div>
       <div className="mb-8 text-center">
-        <span className="rounded-full bg-[#8B7CB5]/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#8B7CB5]">
+        <span className="rounded-full border border-[#8B7CB5]/30 bg-[#8B7CB5]/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#7B6B9B] backdrop-blur-sm">
           Generating
         </span>
-        <h2 className="mt-4 text-3xl font-bold">
+        <h2 className="mt-4 text-3xl font-bold text-slate-800">
           GeoMav writes the truth in a language AI understands.
         </h2>
-        <p className="mt-3 text-white/50">
+        <p className="mt-3 text-slate-600">
           Structured data, /llms.txt, FAQ schemas — formatted for AI readability.
         </p>
       </div>
@@ -421,17 +421,17 @@ function SceneFix({ typedText }: { typedText: string }) {
           return (
             <div
               key={item.label}
-              className={`rounded-xl border p-3.5 transition-colors duration-500 ${
-                done ? "border-emerald-500/30 bg-emerald-950/20" : "border-white/[0.08] bg-white/[0.03]"
+              className={`rounded-xl border p-3.5 backdrop-blur-md transition-colors duration-500 ${
+                done ? "border-emerald-200/60 bg-emerald-50/60" : "border-white/60 bg-white/40"
               }`}
             >
               <div className="mb-1 flex items-center gap-2">
-                <span className="text-sm font-semibold text-white/70">{item.label}</span>
+                <span className="text-sm font-semibold text-slate-800">{item.label}</span>
                 {done && (
                   <motion.svg
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="ml-auto h-4 w-4 text-emerald-400"
+                    className="ml-auto h-4 w-4 text-emerald-600"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -441,34 +441,34 @@ function SceneFix({ typedText }: { typedText: string }) {
                   </motion.svg>
                 )}
               </div>
-              <p className="text-xs text-white/30">{item.desc}</p>
+              <p className="text-xs text-slate-600">{item.desc}</p>
             </div>
           );
         })}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/50">
-        <div className="flex items-center gap-2 border-b border-white/[0.08] px-4 py-2.5">
+      <div className="overflow-hidden rounded-2xl border border-white/60 bg-white/40 backdrop-blur-md">
+        <div className="flex items-center gap-2 border-b border-white/60 bg-white/50 px-4 py-2.5">
           <div className="flex gap-1.5">
-            {["bg-red-500/50", "bg-amber-500/50", "bg-emerald-500/50"].map((c) => (
+            {["bg-red-400/70", "bg-amber-400/70", "bg-emerald-400/70"].map((c) => (
               <div key={c} className={`h-2.5 w-2.5 rounded-full ${c}`} />
             ))}
           </div>
-          <span className="ml-2 font-mono text-xs text-white/25">schema.json</span>
+          <span className="ml-2 font-mono text-xs text-slate-500">schema.json</span>
           <div className="ml-auto flex items-center gap-2">
-            <div className="h-1 w-20 rounded-full bg-white/10">
+            <div className="h-1 w-20 rounded-full bg-slate-200/80">
               <motion.div
                 className="h-full rounded-full bg-[#8B7CB5]"
                 animate={{ width: `${progress * 100}%` }}
                 transition={{ duration: 0.1 }}
               />
             </div>
-            <span className="font-mono text-xs text-white/25">{Math.round(progress * 100)}%</span>
+            <span className="font-mono text-xs text-slate-500">{Math.round(progress * 100)}%</span>
           </div>
         </div>
-        <pre className="min-h-[220px] overflow-auto p-4 font-mono text-xs leading-relaxed text-emerald-400/85">
+        <pre className="min-h-[220px] overflow-auto p-4 font-mono text-xs leading-relaxed text-emerald-800">
           {typedText}
-          <span className="animate-pulse">▋</span>
+          <span className="animate-pulse text-emerald-600">▋</span>
         </pre>
       </div>
     </div>
@@ -492,11 +492,11 @@ function SceneRescan() {
   return (
     <div>
       <div className="mb-8 text-center">
-        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-400">
+        <span className="rounded-full border border-emerald-200/60 bg-emerald-50/70 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-700 backdrop-blur-sm">
           Verifying
         </span>
-        <h2 className="mt-4 text-3xl font-bold">Confirming corrections across every AI.</h2>
-        <p className="mt-3 text-white/50">
+        <h2 className="mt-4 text-3xl font-bold text-slate-800">Confirming corrections across every AI.</h2>
+        <p className="mt-3 text-slate-600">
           GeoMav re-queries all platforms to verify the corrections took effect.
         </p>
       </div>
@@ -507,8 +507,8 @@ function SceneRescan() {
           return (
             <motion.div
               key={s.llm}
-              className={`flex items-center gap-4 rounded-xl border px-4 py-3.5 transition-all duration-500 ${
-                done ? "border-emerald-500/30 bg-emerald-950/20" : "border-white/5 opacity-30"
+              className={`flex items-center gap-4 rounded-xl border px-4 py-3.5 backdrop-blur-md transition-all duration-500 ${
+                done ? "border-emerald-200/60 bg-emerald-50/50" : "border-white/40 bg-white/30 opacity-50"
               }`}
             >
               <div className="flex h-5 w-5 shrink-0 items-center justify-center">
@@ -523,20 +523,20 @@ function SceneRescan() {
                     </svg>
                   </motion.div>
                 ) : (
-                  <div className="h-2 w-2 rounded-full bg-white/15" />
+                  <div className="h-2 w-2 rounded-full bg-slate-300" />
                 )}
               </div>
 
               <div className="flex w-24 shrink-0 items-center gap-2">
                 <span className="h-2 w-2 rounded-full" style={{ background: s.dot }} />
-                <span className="text-sm font-semibold text-white/80">{s.llm}</span>
+                <span className="text-sm font-semibold text-slate-800">{s.llm}</span>
               </div>
 
               {done && (
                 <motion.p
                   initial={{ opacity: 0, x: 8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="flex-1 text-right text-xs text-emerald-400/80"
+                  className="flex-1 text-right text-xs text-emerald-700"
                 >
                   {s.good}
                 </motion.p>
@@ -563,12 +563,12 @@ function SceneAfter({
   return (
     <div>
       <div className="mb-8 text-center">
-        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-400">
+        <span className="rounded-full border border-emerald-200/60 bg-emerald-50/70 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-800 backdrop-blur-sm">
           After GeoMav
         </span>
-        <h2 className="mt-4 text-3xl font-bold">
+        <h2 className="mt-4 text-3xl font-bold text-slate-900">
           {BUSINESS.name} is seen clearly.<br />
-          <span className="text-emerald-400">Everywhere that matters.</span>
+          <span className="text-emerald-700">Everywhere that matters.</span>
         </h2>
       </div>
 
@@ -580,15 +580,15 @@ function SceneAfter({
         ].map((m) => (
           <div
             key={m.label}
-            className="rounded-2xl border border-emerald-500/20 bg-emerald-950/20 p-5 text-center"
+            className="rounded-2xl border border-emerald-200/60 bg-emerald-50/50 p-5 text-center backdrop-blur-md"
           >
-            <p className="text-xs font-medium uppercase tracking-wider text-white/35">{m.label}</p>
-            <p className="mt-2 tabular-nums text-4xl font-bold text-white">
+            <p className="text-xs font-medium uppercase tracking-wider text-slate-600">{m.label}</p>
+            <p className="mt-2 tabular-nums text-4xl font-bold text-slate-900">
               {m.prefix}{m.current}
             </p>
             <div className="mt-2 flex items-center justify-center gap-1.5 text-xs">
-              <span className="text-white/25 line-through">{m.prefix}{m.before}</span>
-              <span className="text-emerald-400">→ {m.prefix}{m.after}</span>
+              <span className="line-through text-slate-500">{m.prefix}{m.before}</span>
+              <span className="text-emerald-700">→ {m.prefix}{m.after}</span>
             </div>
           </div>
         ))}
@@ -601,14 +601,14 @@ function SceneAfter({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.12 + 0.3 }}
-            className="rounded-2xl border border-emerald-500/20 bg-emerald-950/15 p-4"
+            className="rounded-2xl border border-emerald-200/60 bg-emerald-50/40 p-4 backdrop-blur-md"
           >
             <div className="mb-2 flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.dot }} />
-              <span className="text-sm font-semibold text-white/80">{s.llm}</span>
-              <span className="ml-auto text-xs text-emerald-400">✓ Accurate</span>
+              <span className="text-sm font-semibold text-slate-900">{s.llm}</span>
+              <span className="ml-auto text-xs font-medium text-emerald-700">✓ Accurate</span>
             </div>
-            <p className="text-xs leading-relaxed text-white/50 italic">&ldquo;{s.good}&rdquo;</p>
+            <p className="text-sm leading-relaxed italic text-slate-700">&ldquo;{s.good}&rdquo;</p>
           </motion.div>
         ))}
       </div>
@@ -625,19 +625,19 @@ function SceneCTA() {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 180, damping: 14 }}
-        className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-emerald-500/15 ring-1 ring-emerald-500/30"
+        className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl border border-emerald-200/60 bg-emerald-50/60 shadow-sm backdrop-blur-md"
       >
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.75">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="1.75">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </motion.div>
 
-      <h2 className="text-4xl font-bold">
+      <h2 className="text-4xl font-bold text-slate-800">
         This is GeoMav.<br />
-        <span className="text-[#8B7CB5]">Real visibility. No more guessing.</span>
+        <span className="text-[#7B6B9B]">Real visibility. No more guessing.</span>
       </h2>
 
-      <p className="mx-auto mt-5 max-w-md text-lg text-white/45">
+      <p className="mx-auto mt-5 max-w-md text-lg text-slate-600">
         Every business deserves to be seen accurately by AI.
         Start with a free AI Brand Audit — takes 2 minutes.
       </p>
@@ -645,16 +645,16 @@ function SceneCTA() {
       <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
         <Link
           href="/signup"
-          className="rounded-xl bg-[#8B7CB5] px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#8B7CB5]/20 transition hover:bg-[#9d8ec8] active:scale-95"
+          className="rounded-xl bg-[#8B7CB5] px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-[#8B7CB5]/25 transition hover:bg-[#9d8ec8] hover:shadow-lg active:scale-95"
         >
           Start your free audit →
         </Link>
-        <Link href="/" className="text-sm font-medium text-white/35 transition hover:text-white/60">
+        <Link href="/" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">
           Learn more about GeoMav
         </Link>
       </div>
 
-      <p className="mt-6 text-xs text-white/20">
+      <p className="mt-6 text-xs text-slate-500">
         No credit card · Works for any business · No AI experience needed
       </p>
     </div>
@@ -734,16 +734,16 @@ export default function DemoPage() {
   }, [scene]);
 
   return (
-    <div className="relative min-h-screen text-white">
+    <div className="demo-glass-page relative min-h-screen">
       <div
         className="absolute inset-0 -z-10"
         style={{
           background:
-            "linear-gradient(180deg, var(--color-hero) 0%, var(--color-page) 55%, #f7f5fb 100%)",
+            "linear-gradient(165deg, #f8f6fc 0%, #f2eef8 35%, #ebe4f4 70%, #e5e0f0 100%)",
         }}
       />
       {/* Progress bar */}
-      <div className="fixed left-0 right-0 top-0 z-50 h-0.5 bg-card-lavender/20">
+      <div className="fixed left-0 right-0 top-0 z-50 h-0.5 bg-white/60 backdrop-blur-sm">
         <motion.div
           className="h-full bg-[#8B7CB5]"
           animate={{ width: `${((scene + 1) / TOTAL_SCENES) * 100}%` }}
@@ -753,9 +753,9 @@ export default function DemoPage() {
 
       {/* Demo mode badge */}
       <div className="fixed left-1/2 top-4 z-50 -translate-x-1/2">
-        <div className="flex items-center gap-2 rounded-full border border-card-lavender/30 bg-white/85 px-4 py-1.5 backdrop-blur-lg">
+        <div className="demo-glass-pill flex items-center gap-2 rounded-full border border-white/70 bg-white/40 px-4 py-1.5 shadow-sm backdrop-blur-xl">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#8B7CB5]" />
-          <span className="text-xs font-semibold uppercase tracking-widest text-[#8B7CB5]">
+          <span className="text-xs font-semibold uppercase tracking-widest text-slate-600">
             Demo Mode
           </span>
         </div>
@@ -764,13 +764,13 @@ export default function DemoPage() {
       {/* GeoMav home link */}
       <div className="fixed left-6 top-[18px] z-50">
         <Logo
-          className="opacity-60 transition hover:opacity-90 [&_img]:h-7 [&_img]:w-auto md:[&_img]:h-8"
+          className="opacity-70 transition hover:opacity-100 [&_img]:h-7 [&_img]:w-auto md:[&_img]:h-8"
         />
       </div>
 
       {/* Scene content */}
       <main className="flex min-h-screen items-center justify-center px-4 py-28">
-        <div className="w-full max-w-4xl rounded-[28px] border border-white/70 bg-[#120d1f]/92 p-6 shadow-[0_24px_70px_rgba(41,28,59,0.26)] backdrop-blur-sm md:p-10">
+        <div className="demo-glass-panel w-full max-w-4xl rounded-[28px] border border-white/70 bg-white/35 p-6 shadow-[0_8px_40px_rgba(139,124,181,0.12)] backdrop-blur-xl md:p-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={scene}
@@ -794,11 +794,11 @@ export default function DemoPage() {
 
       {/* Bottom nav controls */}
       <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2">
-        <div className="flex items-center gap-5 rounded-2xl border border-card-lavender/30 bg-white/88 px-6 py-3 shadow-xl backdrop-blur-xl">
+        <div className="demo-glass-pill flex items-center gap-5 rounded-2xl border border-white/70 bg-white/40 px-6 py-3 shadow-[0_8px_32px_rgba(139,124,181,0.08)] backdrop-blur-xl">
           <button
             onClick={prev}
             disabled={scene === 0}
-            className="text-sm text-heading/50 transition hover:text-heading/85 disabled:opacity-20"
+            className="text-sm text-slate-600 transition hover:text-slate-900 disabled:opacity-30"
           >
             ← Prev
           </button>
@@ -811,7 +811,7 @@ export default function DemoPage() {
                 className={`rounded-full transition-all duration-300 ${
                   i === scene
                     ? "h-1.5 w-5 bg-[#8B7CB5]"
-                    : "h-1.5 w-1.5 bg-heading/20 hover:bg-heading/35"
+                    : "h-1.5 w-1.5 bg-slate-300/60 hover:bg-slate-400/60"
                 }`}
               />
             ))}
@@ -820,7 +820,7 @@ export default function DemoPage() {
           <button
             onClick={next}
             disabled={scene === TOTAL_SCENES - 1}
-            className="text-sm text-heading/50 transition hover:text-heading/85 disabled:opacity-20"
+            className="text-sm text-slate-600 transition hover:text-slate-900 disabled:opacity-30"
           >
             Next →
           </button>
