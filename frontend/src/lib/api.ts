@@ -92,4 +92,10 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
+
+  deleteAccount: (userId: string) =>
+    apiFetch("/api/user/account", {
+      method: "DELETE",
+      body: JSON.stringify({ user_id: userId }),
+    }),
 };

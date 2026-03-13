@@ -109,6 +109,7 @@ export default function OnboardingPage() {
     try {
       const res: any = await api.saveOnboardProfile(profile);
       setBusinessId(res.business_id);
+      document.cookie = "geomav_onboarded=true; path=/; max-age=31536000";
       setStep(2);
       handleScan(res.business_id);
     } catch (e: any) {

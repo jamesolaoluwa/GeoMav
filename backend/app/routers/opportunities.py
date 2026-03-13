@@ -12,8 +12,8 @@ router = APIRouter(tags=["opportunities"])
 MOCK_FALLBACK_OPPORTUNITIES = [
     {
         "id": "opp-001",
-        "title": "Improve GPT-4 visibility for product queries",
-        "description": "GPT-4 mentions GeoMav in only 60% of product-related queries",
+        "title": "Improve ChatGPT visibility for product queries",
+        "description": "ChatGPT mentions GeoMav in only 60% of product-related queries",
         "priority": "high",
         "impact_score": 85,
         "effort": "medium",

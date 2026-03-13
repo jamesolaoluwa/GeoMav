@@ -1,7 +1,10 @@
 #!/bin/bash
-echo "GeoMav requires 2 terminals to see logs separately."
+cd "$(cd "$(dirname "$0")" && pwd)"
+echo "Starting GeoMav (backend + frontend)..."
 echo ""
-echo "  Terminal 1:  ./start-backend.sh"
-echo "  Terminal 2:  ./start-frontend.sh"
-echo ""
-echo "To stop both:  ./stop-all.sh"
+concurrently \
+  --names "API,WEB" \
+  --prefix-colors "cyan,magenta" \
+  --kill-others-on-fail \
+  "./start-backend.sh" \
+  "./start-frontend.sh"

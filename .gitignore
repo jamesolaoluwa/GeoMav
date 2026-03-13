@@ -48,6 +48,13 @@ backend/.venv/
 backend/.mypy_cache/
 backend/.pytest_cache/
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv*/
+venv*/
+
 # backend PID
 .backend.pid
 

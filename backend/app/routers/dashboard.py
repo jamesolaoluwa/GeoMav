@@ -27,7 +27,7 @@ MOCK_FALLBACK = {
         {"date": "2025-03-11", "score": 78},
     ],
     "llm_breakdown": [
-        {"llm": "GPT-4", "visibility": 85, "mentions": 120},
+        {"llm": "ChatGPT", "visibility": 85, "mentions": 120},
         {"llm": "Claude", "visibility": 82, "mentions": 98},
         {"llm": "Gemini", "visibility": 71, "mentions": 65},
         {"llm": "Llama", "visibility": 68, "mentions": 45},

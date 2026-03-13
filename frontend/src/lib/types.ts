@@ -7,6 +7,14 @@ export interface Business {
   created_at: string;
 }
 
+export interface UserProfile {
+  id: string;
+  email: string;
+  display_name: string;
+  avatar_url?: string;
+  created_at: string;
+}
+
 export interface Query {
   id: string;
   text: string;

@@ -1,6 +1,6 @@
 # GeoMav — Progress Tracker
 
-Last updated: 2026-03-12 (session 2)
+Last updated: 2026-03-13 (session 3)
 
 ## Completed
 
@@ -9,7 +9,9 @@ Last updated: 2026-03-12 (session 2)
 - [x] Supabase client setup (frontend browser + server, backend service role)
 - [x] Environment config (.env at root, .env.local in frontend)
 - [x] Start/stop scripts (start-backend.sh, start-frontend.sh, stop-all.sh)
+- [x] Nodemon + concurrently for dev workflow (single `./start.sh` runs both services)
 - [x] Backend config fixed (extra="ignore" for Pydantic settings)
+- [x] .gitignore updated (__pycache__, .venv*)
 
 ### Landing Page
 - [x] Full rebrand from BloomFi to GeoMav
@@ -39,6 +41,7 @@ Last updated: 2026-03-12 (session 2)
 - [x] Sidebar with grouped navigation (Analytics, Monitor, Action, Settings)
 - [x] Top header with page title and notifications
 - [x] Sign Out button (sidebar bottom + header)
+- [x] User avatar (initials) and email displayed in sidebar and header
 - [x] GeoMav logo links back to landing page
 - [x] Mobile-responsive sidebar (hamburger menu)
 - [x] Active route highlighting
@@ -53,20 +56,21 @@ Last updated: 2026-03-12 (session 2)
 - [x] Shopping: product mention matrix, shopping query results
 - [x] Opportunities: priority-ranked action items with category filters and status management
 - [x] Content: AI Summary / llms.txt / JSON-LD tabs with editor and deploy buttons
-- [x] Settings: business profile form, API keys, notification toggles
+- [x] Settings: business profile form, API keys, notification toggles, account management
 
-### Backend API (11 routers)
+### Backend API (12 routers)
 - [x] All routers created with mock data
 - [x] All routers updated to query Supabase with graceful mock fallback
 - [x] Dashboard aggregation from multiple tables
 - [x] CRUD operations for hallucinations, prompts, opportunities, content, business
 - [x] Run Scan endpoint triggering Analytics Agent as background task
+- [x] User router: GET /api/user/profile (with mock fallback), DELETE /api/user/account
 
 ### Frontend-Backend Wiring
 - [x] All 10 dashboard pages fetch from API via useEffect/useState
 - [x] Loading skeletons on all pages
 - [x] Mock data fallback on API error
-- [x] Write operations wired: hallucination status, prompt CRUD, opportunity status, content save/deploy, business profile save
+- [x] Write operations wired: hallucination status, prompt CRUD, opportunity status, content save/deploy, business profile save, account profile save, password change, account deletion
 - [x] Run Scan button on dashboard overview
 
 ### Database
@@ -96,8 +100,16 @@ Last updated: 2026-03-12 (session 2)
 - [ ] Actually call OpenAI, Anthropic, Gemini, Perplexity APIs when keys are provided (agent code exists but untested with real keys)
 - [ ] Handle rate limiting and API errors gracefully
 
+### User Profile / Account Management
+- [x] useUser hook with Supabase auth.getUser() and dummy fallback
+- [x] Account section on Settings: avatar, display name edit, read-only email
+- [x] Change Password section with validation (min 8 chars, confirm match)
+- [x] Danger Zone: delete account with confirmation modal (type "DELETE")
+- [x] Backend DELETE /api/user/account via Supabase Admin API (cascades to businesses)
+- [x] UserProfile type added to frontend types
+- [x] Header avatar links to Settings; sidebar shows user identity
+
 ### Missing Features
-- [ ] User profile / account management
 - [ ] Email notification system for hallucination alerts
 - [ ] Weekly report generation and delivery
 - [ ] Stripe/payment integration for subscription tiers
