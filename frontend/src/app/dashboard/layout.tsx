@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { useUser } from "@/lib/useUser";
 
 const SIDEBAR_NAV = [
   {
@@ -35,6 +36,20 @@ const SIDEBAR_NAV = [
     items: [{ href: "/dashboard/settings", label: "Settings", icon: SettingsIcon }],
   },
 ];
+
+function getInitials(displayName: string | undefined, email: string | undefined): string {
+  if (displayName) {
+    const parts = displayName.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return displayName.slice(0, 2).toUpperCase();
+  }
+  if (email) {
+    return email.slice(0, 2).toUpperCase();
+  }
+  return "U";
+}
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Overview",
@@ -180,8 +195,16 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { user } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  const displayName =
+    (user?.user_metadata as Record<string, string> | undefined)?.display_name ||
+    (user?.user_metadata as Record<string, string> | undefined)?.full_name ||
+    user?.email ||
+    "";
+  const initials = getInitials(displayName || undefined, user?.email ?? undefined);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -270,6 +293,20 @@ export default function DashboardLayout({
           </nav>
 
           <div className="border-t border-white/10 p-4">
+            <div className="mb-3 flex items-center gap-3">
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 text-sm font-semibold text-white"
+                aria-hidden
+              >
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-gray-300">
+                  {displayName || user?.email || "User"}
+                </p>
+                <p className="truncate text-xs text-gray-500">{user?.email ?? ""}</p>
+              </div>
+            </div>
             <button
               type="button"
               onClick={handleLogout}
@@ -319,14 +356,13 @@ export default function DashboardLayout({
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
             </button>
-            <button
-              type="button"
-              onClick={handleLogout}
-              disabled={loggingOut}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
+            <Link
+              href="/dashboard/settings"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-300"
+              aria-label="Account settings"
             >
-              {loggingOut ? "..." : "Sign Out"}
-            </button>
+              {initials}
+            </Link>
           </div>
         </header>
 

@@ -40,8 +40,8 @@ html {
 
   --radius-card: 20px;
 
-  --font-display: var(--font-dm-serif);
-  --font-body: var(--font-plus-jakarta);
+  --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --font-body: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
