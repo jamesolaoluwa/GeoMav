@@ -3,6 +3,8 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import CTAButton from "@/components/ui/CTAButton";
+import { SparklesText } from "@/components/ui/sparkles-text";
+import { TextLoop } from "@/components/ui/text-loop";
 import { fadeUp, scaleSettle, staggerContainer } from "@/lib/motion";
 
 const VB_W = 600;
@@ -19,19 +21,19 @@ const aiPlatforms = [
     label: "Gemini",
     x: 320,
     y: 40,
-    image: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg",
+    image: "/images/logos/gemini.png",
   },
   {
     label: "Claude",
     x: 520,
     y: 80,
-    image: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Claude_AI_logo.svg",
+    image: "/images/logos/claude-logo.png",
   },
   {
     label: "Perplexity",
     x: 160,
     y: 240,
-    image: "https://upload.wikimedia.org/wikipedia/commons/1/1d/Perplexity_AI_logo.svg",
+    image: "/images/logos/perplexity-logo.png",
   },
   {
     label: "Bing AI",
@@ -42,6 +44,48 @@ const aiPlatforms = [
 ];
 
 const brandCenter = { x: 300, y: 160 };
+const baseHeroLoopPlatforms = [
+  {
+    label: "ChatGPT",
+    image: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg",
+    logoClassName: "h-7 w-auto",
+  },
+  {
+    label: "Gemini",
+    image: "/images/logos/gemini.png",
+    logoClassName: "h-7 w-auto",
+  },
+  {
+    label: "Claude",
+    image: "/images/logos/claude-logo.png",
+    logoClassName: "h-7 w-auto",
+  },
+  {
+    label: "Perplexity",
+    image: "/images/logos/perplexity-logo.png",
+    logoClassName: "h-7 w-auto",
+  },
+  {
+    label: "DeepSeek",
+    image: "/images/logos/deepseek.png",
+    logoClassName: "h-7 w-auto",
+  },
+];
+
+const heroLoopPlatforms = [
+  ...Array.from({ length: 3 }, (_, cycle) =>
+    baseHeroLoopPlatforms.map((platform) => ({
+      ...platform,
+      id: `${platform.label}-${cycle + 1}`,
+    })),
+  ).flat(),
+  {
+    id: "every-tool-final",
+    label: "every tool",
+    image: "",
+    logoClassName: "",
+  },
+];
 
 function pct(val: number, total: number) {
   return `${(val / total) * 100}%`;
@@ -68,17 +112,53 @@ export default function HeroSection() {
       >
         <motion.h1
           variants={fadeUp}
-          className="max-w-[640px] text-[2.5rem] leading-[1.0] tracking-[-0.02em] text-heading md:text-[3.5rem] lg:text-[4.5rem]"
+          className="max-w-[640px] text-[2.5rem] leading-[1.0] tracking-[-0.02em] text-heading md:text-[3.5rem] lg:max-w-[900px] lg:whitespace-nowrap lg:text-[4.5rem]"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Own Your AI Visibility
+          Own Your AI Visibility in
         </motion.h1>
+
+        <motion.div variants={fadeUp} className="mt-3 flex justify-center md:mt-4">
+          <TextLoop interval={1.8} playOnce className="text-heading">
+            {heroLoopPlatforms.map((platform) =>
+              platform.id === "every-tool-final" ? (
+                <span
+                  key={platform.id}
+                  className="flex items-center justify-center gap-2.5 whitespace-nowrap"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  <span className="inline-block w-7 md:w-8 lg:w-10" aria-hidden="true" />
+                  <SparklesText
+                    text="every tool"
+                    className="text-[2.4rem] font-normal leading-[1] tracking-[-0.02em] text-heading md:text-[3.3rem] lg:text-[4.2rem]"
+                    colors={{ first: "#8B7CB5", second: "#B8A9D4" }}
+                    sparklesCount={8}
+                  />
+                </span>
+              ) : (
+                <span
+                  key={platform.id}
+                  className="flex items-center justify-center gap-2.5 whitespace-nowrap text-[2.4rem] leading-[1] tracking-[-0.02em] md:gap-3 md:text-[3.3rem] lg:text-[4.2rem]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={platform.image}
+                    alt={platform.label}
+                    className={`${platform.logoClassName} object-contain md:h-8 lg:h-10`}
+                  />
+                  <span>{platform.label}</span>
+                </span>
+              ),
+            )}
+          </TextLoop>
+        </motion.div>
 
         <motion.p
           variants={fadeUp}
           className="mx-auto mt-5 max-w-[480px] text-[0.95rem] leading-relaxed text-body md:text-[1.05rem]"
         >
-          Track how ChatGPT, Gemini, Claude, and Perplexity represent your
+          Track how tools like ChatGPT, Gemini, Claude, and Perplexity represent your
           business. Detect hallucinations, fix inaccuracies, and improve your
           ranking in AI-powered discovery.
         </motion.p>

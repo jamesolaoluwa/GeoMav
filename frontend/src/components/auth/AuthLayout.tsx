@@ -1,8 +1,8 @@
 "use client";
 
 import { type ReactNode } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
+import Logo from "@/components/ui/Logo";
 import { fadeUp, staggerContainer } from "@/lib/motion";
 
 interface AuthLayoutProps {
@@ -156,9 +156,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
             "linear-gradient(135deg, var(--color-hero) 0%, var(--color-page) 50%, rgba(184,169,212,0.15) 100%)",
         }}
       >
-        <Link href="/" className="text-xl font-semibold tracking-tight text-heading hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-display)" }}>
-          GeoMav
-        </Link>
+        <Logo className="hover:opacity-80 transition-opacity" />
 
         <div className="flex flex-col items-center gap-8">
           <NetworkVisualization />
@@ -193,9 +191,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       <div className="flex w-full flex-col items-center justify-center bg-white p-6 md:w-1/2 md:p-10 lg:p-14">
         {/* Mobile logo */}
         <div className="mb-8 md:hidden">
-          <Link href="/" className="text-xl font-semibold tracking-tight text-heading hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-display)" }}>
-            GeoMav
-          </Link>
+          <Logo className="hover:opacity-80 transition-opacity" />
         </div>
 
         <div className="w-full max-w-[400px]">{children}</div>
