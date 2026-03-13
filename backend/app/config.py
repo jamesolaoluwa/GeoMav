@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     google_gemini_api_key: str = ""
     perplexity_api_key: str = ""
 
+    resend_api_key: str = ""
+    notification_from_email: str = "noreply@geomav.com"
+
     class Config:
         env_file = "../.env"
         env_file_encoding = "utf-8"

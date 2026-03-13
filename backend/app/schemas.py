@@ -46,3 +46,11 @@ class DeployCorrection(BaseModel):
 
 class DeleteAccountRequest(BaseModel):
     user_id: str
+
+
+class NotificationPreferencesUpdate(BaseModel):
+    user_id: str
+    hallucination_alerts: Optional[bool] = None
+    weekly_report: Optional[bool] = None
+    opportunity_alerts: Optional[bool] = None
+    email: Optional[str] = None
