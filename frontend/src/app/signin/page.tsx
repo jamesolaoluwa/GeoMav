@@ -34,7 +34,8 @@ export default function SignInPage() {
       return;
     }
 
-    router.push("/onboarding");
+    const onboarded = document.cookie.includes("geomav_onboarded=true");
+    router.push(onboarded ? "/dashboard" : "/onboarding");
     router.refresh();
   };
 

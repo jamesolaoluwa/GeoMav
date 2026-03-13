@@ -12,7 +12,7 @@ router = APIRouter(tags=["hallucinations"])
 MOCK_FALLBACK_CLAIMS = [
     {
         "id": "claim-001",
-        "llm": "GPT-4",
+        "llm": "ChatGPT",
         "claim": "GeoMav was founded in 2018",
         "actual": "GeoMav was founded in 2020",
         "status": "pending",

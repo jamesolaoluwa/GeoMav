@@ -19,7 +19,7 @@ MOCK_FALLBACK = {
         {"date": "2025-03-10", "positive": 0.72, "neutral": 0.22, "negative": 0.06},
     ],
     "sentiment_by_llm": [
-        {"llm": "GPT-4", "positive": 0.78, "neutral": 0.18, "negative": 0.04},
+        {"llm": "ChatGPT", "positive": 0.78, "neutral": 0.18, "negative": 0.04},
         {"llm": "Claude", "positive": 0.75, "neutral": 0.20, "negative": 0.05},
         {"llm": "Gemini", "positive": 0.68, "neutral": 0.26, "negative": 0.06},
         {"llm": "Llama", "positive": 0.65, "neutral": 0.28, "negative": 0.07},
