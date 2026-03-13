@@ -62,6 +62,9 @@ async def _run_scan_task(business_id: str):
                         if "{location}" not in t or loc
                     ]
 
+                from app.routers.onboard import _deduplicate_queries
+                smart_queries = _deduplicate_queries(smart_queries)
+
                 query_rows = [
                     {"text": q, "category": business.get("category", "Business"), "business_id": business_id}
                     for q in smart_queries

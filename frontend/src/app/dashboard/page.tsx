@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   LineChart,
   Line,
@@ -11,7 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { api } from "@/lib/api";
-import { useUserId } from "@/lib/UserContext";
+import { useUserId, useUserLoading } from "@/lib/UserContext";
 import {
   mockDashboardMetrics,
   mockVisibilityTrend,
@@ -85,54 +86,77 @@ function ChangeIndicator({
   );
 }
 
-function LoadingSkeleton() {
+const METRIC_CARD_LABELS = [
+  "AI Visibility Score",
+  "Truth Score",
+  "Brand Ranking",
+  "Claim Accuracy",
+  "Active Hallucinations",
+];
+
+function Shimmer({ className }: { className?: string }) {
+  return <div className={`animate-pulse rounded bg-slate-200 ${className ?? ""}`} />;
+}
+
+function MetricsLoadingState() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="h-8 w-48 animate-pulse rounded bg-gray-200" />
+        <h1 className="text-2xl font-semibold text-slate-900">Dashboard Overview</h1>
         <div className="h-10 w-64 animate-pulse rounded bg-gray-200" />
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
-            <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
-            <div className="mt-2 h-8 w-16 animate-pulse rounded bg-gray-200" />
+
+      <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm text-blue-800">
+        Loading your metrics...
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {METRIC_CARD_LABELS.map((label) => (
+          <div key={label} className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+            <p className="text-sm font-medium text-slate-500">{label}</p>
+            <div className="mt-1 flex items-baseline gap-2">
+              <Shimmer className="h-8 w-16" />
+              <Shimmer className="h-4 w-12" />
+            </div>
           </div>
         ))}
       </div>
+
       <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
-        <div className="mb-4 h-6 w-32 animate-pulse rounded bg-gray-200" />
-        <div className="h-64 animate-pulse rounded bg-gray-200" />
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">Visibility Trend</h2>
+        <Shimmer className="h-64 w-full" />
       </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200/50">
           <div className="border-b border-slate-200 px-5 py-4">
-            <div className="h-6 w-28 animate-pulse rounded bg-gray-200" />
+            <h2 className="text-lg font-semibold text-slate-900">LLM Breakdown</h2>
           </div>
           <div className="space-y-3 p-5">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-10 animate-pulse rounded bg-gray-200" />
+            {[1, 2, 3, 4].map((i) => (
+              <Shimmer key={i} className="h-10 w-full" />
             ))}
           </div>
         </div>
         <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200/50">
           <div className="border-b border-slate-200 px-5 py-4">
-            <div className="h-6 w-36 animate-pulse rounded bg-gray-200" />
+            <h2 className="text-lg font-semibold text-slate-900">Competitor Visibility</h2>
           </div>
           <div className="space-y-3 p-5">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-10 animate-pulse rounded bg-gray-200" />
+            {[1, 2, 3, 4].map((i) => (
+              <Shimmer key={i} className="h-10 w-full" />
             ))}
           </div>
         </div>
       </div>
+
       <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200/50">
         <div className="border-b border-slate-200 px-5 py-4">
-          <div className="h-6 w-40 animate-pulse rounded bg-gray-200" />
+          <h2 className="text-lg font-semibold text-slate-900">Active Hallucinations</h2>
         </div>
         <div className="space-y-3 p-5">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-12 animate-pulse rounded bg-gray-200" />
+          {[1, 2, 3].map((i) => (
+            <Shimmer key={i} className="h-12 w-full" />
           ))}
         </div>
       </div>
@@ -148,43 +172,91 @@ export default function DashboardPage() {
 
   const [estimated, setEstimated] = useState(false);
   const userId = useUserId();
+  const userLoading = useUserLoading();
+  const searchParams = useSearchParams();
+  const isFresh = searchParams.get("fresh") === "1";
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    setEstimated(false);
-    api
-      .getDashboard(timeFilter, userId)
-      .then(async (res: any) => {
-        const noData =
-          res?.status === "no_data" ||
-          (!res?.competitors?.length && !res?.visibility_trend?.length && (res?.truth_score ?? 0) === 0);
-        if (noData) {
+  const fetchDashboard = useCallback(async (retries = 0): Promise<void> => {
+    try {
+      const res: any = await api.getDashboard(timeFilter, userId);
+      const noData =
+        res?.status === "no_data" ||
+        (!res?.competitors?.length && !res?.visibility_trend?.length && (res?.truth_score ?? 0) === 0);
+
+      if (noData && isFresh && retries < 12) {
+        if (retries === 0) {
           try {
             const est: any = await api.getEstimate(userId);
             setData({ ...res, ...est });
             setEstimated(true);
-            return;
           } catch { /* fall through */ }
         }
-        setData(res);
-      })
-      .catch(() => {
-        setData(null);
-      })
-      .finally(() => setLoading(false));
-  }, [timeFilter, userId]);
+        pollRef.current = setTimeout(() => fetchDashboard(retries + 1), 5000);
+        return;
+      }
+
+      if (noData && !isFresh) {
+        try {
+          const est: any = await api.getEstimate(userId);
+          setData({ ...res, ...est });
+          setEstimated(true);
+          return;
+        } catch { /* fall through */ }
+      }
+
+      setData(res);
+      setEstimated(false);
+    } catch {
+      if (isFresh && retries < 12) {
+        pollRef.current = setTimeout(() => fetchDashboard(retries + 1), 5000);
+        return;
+      }
+      setData(null);
+    } finally {
+      if (!isFresh || retries === 0) setLoading(false);
+    }
+  }, [timeFilter, userId, isFresh]);
+
+  useEffect(() => {
+    if (userLoading) return;
+    setLoading(true);
+    setEstimated(false);
+    fetchDashboard(0);
+    return () => {
+      if (pollRef.current) clearTimeout(pollRef.current);
+    };
+  }, [fetchDashboard, userLoading]);
 
   const handleRunScan = async () => {
     setScanning(true);
     try {
       await api.runScan(userId);
-      alert("Scan started successfully. Data will refresh shortly.");
+      const pollForResults = async (attempts: number) => {
+        if (attempts <= 0) {
+          setScanning(false);
+          setLoading(false);
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 5000));
+        try {
+          const res: any = await api.getDashboard(timeFilter, userId);
+          const hasNewData =
+            res?.status === "ok" &&
+            (res?.visibility_trend?.length > 0 || res?.llm_breakdown?.length > 0);
+          if (hasNewData) {
+            setData(res);
+            setScanning(false);
+            setLoading(false);
+            return;
+          }
+        } catch { /* keep polling */ }
+        pollForResults(attempts - 1);
+      };
       setLoading(true);
-      const res = await api.getDashboard(timeFilter, userId);
-      setData(res);
+      pollForResults(12);
     } catch {
       alert("Failed to start scan. Please try again.");
-    } finally {
       setScanning(false);
       setLoading(false);
     }
@@ -228,8 +300,8 @@ export default function DashboardPage() {
 
   const hallucinations: typeof mockHallucinations = data?.hallucinations ?? [];
 
-  if (loading && !data) {
-    return <LoadingSkeleton />;
+  if (userLoading || (loading && !data)) {
+    return <MetricsLoadingState />;
   }
 
   return (

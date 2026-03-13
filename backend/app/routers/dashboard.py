@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from collections import defaultdict
 from typing import Optional
@@ -59,40 +60,63 @@ async def get_dashboard(filter: Optional[str] = None, user_id: Optional[str] = N
             cache.set(cache_key, fb)
             return fb
 
-        pending_claims = (
-            supabase.table("claims")
-            .select("id", count="exact")
-            .eq("status", "pending")
-            .execute()
-        )
-        active_hallucinations = pending_claims.count or 0
+        biz_query_ids = []
+        biz_response_ids = []
+        try:
+            q_res = supabase.table("queries").select("id").eq("business_id", business_id).execute()
+            biz_query_ids = [r["id"] for r in (q_res.data or [])]
+            if biz_query_ids:
+                r_res = supabase.table("llm_responses").select("id").in_("query_id", biz_query_ids).execute()
+                biz_response_ids = [r["id"] for r in (r_res.data or [])]
+        except Exception:
+            pass
 
-        total_claims = (
-            supabase.table("claims")
-            .select("id", count="exact")
-            .execute()
-        )
-        resolved_claims = (
-            supabase.table("claims")
-            .select("id", count="exact")
-            .eq("status", "resolved")
-            .execute()
-        )
-        total_c = total_claims.count or 0
-        resolved_c = resolved_claims.count or 0
+        def _fetch_pending_claims():
+            return supabase.table("claims").select("id", count="exact").eq("status", "pending").in_("response_id", biz_response_ids).execute()
+
+        def _fetch_total_claims():
+            return supabase.table("claims").select("id", count="exact").in_("response_id", biz_response_ids).execute()
+
+        def _fetch_resolved_claims():
+            return supabase.table("claims").select("id", count="exact").eq("status", "resolved").in_("response_id", biz_response_ids).execute()
+
+        def _fetch_snapshots():
+            return supabase.table("visibility_snapshots").select("claim_count, pending_claims, visibility_score").eq("business_id", business_id).order("snapshot_date", desc=True).limit(2).execute()
+
+        def _fetch_competitors():
+            return supabase.table("competitors").select("*").eq("business_id", business_id).order("visibility_score", desc=True).execute()
+
+        def _fetch_mentions():
+            return supabase.table("mentions").select("*").eq("business_id", business_id).execute()
+
+        if biz_response_ids:
+            pending_claims, total_claims, resolved_claims, snaps, competitors_res, mentions_res = (
+                await asyncio.gather(
+                    asyncio.to_thread(_fetch_pending_claims),
+                    asyncio.to_thread(_fetch_total_claims),
+                    asyncio.to_thread(_fetch_resolved_claims),
+                    asyncio.to_thread(_fetch_snapshots),
+                    asyncio.to_thread(_fetch_competitors),
+                    asyncio.to_thread(_fetch_mentions),
+                )
+            )
+            active_hallucinations = pending_claims.count or 0
+            total_c = total_claims.count or 0
+            resolved_c = resolved_claims.count or 0
+        else:
+            snaps, competitors_res, mentions_res = await asyncio.gather(
+                asyncio.to_thread(_fetch_snapshots),
+                asyncio.to_thread(_fetch_competitors),
+                asyncio.to_thread(_fetch_mentions),
+            )
+            active_hallucinations = 0
+            total_c = 0
+            resolved_c = 0
+
         claim_accuracy = round((resolved_c / max(total_c, 1)) * 100, 1)
 
         claim_accuracy_change = 0.0
-        snaps = None
         try:
-            snaps = (
-                supabase.table("visibility_snapshots")
-                .select("claim_count, pending_claims, visibility_score")
-                .eq("business_id", business_id)
-                .order("snapshot_date", desc=True)
-                .limit(2)
-                .execute()
-            )
             if snaps.data and len(snaps.data) >= 2:
                 curr = snaps.data[0]
                 prev = snaps.data[1]
@@ -106,13 +130,6 @@ async def get_dashboard(filter: Optional[str] = None, user_id: Optional[str] = N
         except Exception:
             pass
 
-        competitors_res = (
-            supabase.table("competitors")
-            .select("*")
-            .eq("business_id", business_id)
-            .order("visibility_score", desc=True)
-            .execute()
-        )
         competitors_list = []
         for i, c in enumerate(competitors_res.data or []):
             is_own = c.get("name") == business_name
@@ -169,18 +186,14 @@ async def get_dashboard(filter: Optional[str] = None, user_id: Optional[str] = N
             ts_change = None
             ca_change = None
 
-        mentions_res = (
-            supabase.table("mentions")
-            .select("*")
-            .eq("business_id", business_id)
-            .execute()
-        )
         mentions = mentions_res.data or []
 
         resp_ids = list({m["response_id"] for m in mentions if m.get("response_id")})
         llm_by_id: dict[str, str] = {}
         if resp_ids:
-            all_resps = supabase.table("llm_responses").select("id, llm_name").in_("id", resp_ids).execute()
+            all_resps = await asyncio.to_thread(
+                lambda: supabase.table("llm_responses").select("id, llm_name").in_("id", resp_ids).execute()
+            )
             llm_by_id = {r["id"]: r["llm_name"] for r in (all_resps.data or [])}
 
         by_date: dict[str, list] = defaultdict(list)
@@ -260,39 +273,44 @@ async def get_dashboard(filter: Optional[str] = None, user_id: Optional[str] = N
 
         hallucination_rows = []
         try:
-            claims_res = (
+            claims_query = (
                 supabase.table("claims")
                 .select("id, claim_value, verified_value, status, claim_type, response_id")
                 .eq("status", "pending")
                 .limit(10)
-                .execute()
             )
-            for c in (claims_res.data or []):
-                item = {
+            if biz_response_ids:
+                claims_query = claims_query.in_("response_id", biz_response_ids)
+            claims_res = await asyncio.to_thread(claims_query.execute)
+            claims_data = claims_res.data or []
+
+            claim_resp_ids = list({c["response_id"] for c in claims_data if c.get("response_id")})
+            resp_map: dict[str, dict] = {}
+            query_map: dict[str, str] = {}
+            if claim_resp_ids:
+                bulk_resps = await asyncio.to_thread(
+                    lambda: supabase.table("llm_responses").select("id, llm_name, query_id").in_("id", claim_resp_ids).execute()
+                )
+                for r in (bulk_resps.data or []):
+                    resp_map[r["id"]] = r
+
+                bulk_query_ids = list({r["query_id"] for r in (bulk_resps.data or []) if r.get("query_id")})
+                if bulk_query_ids:
+                    bulk_queries = await asyncio.to_thread(
+                        lambda: supabase.table("queries").select("id, text").in_("id", bulk_query_ids).execute()
+                    )
+                    query_map = {q["id"]: q.get("text", "") for q in (bulk_queries.data or [])}
+
+            for c in claims_data:
+                resp_row = resp_map.get(c.get("response_id", ""), {})
+                hallucination_rows.append({
                     "id": c["id"],
                     "claim_value": c.get("claim_value", ""),
                     "verified_value": c.get("verified_value", ""),
                     "status": c.get("status", "pending"),
-                    "llm_name": "Unknown",
-                    "query_text": "",
-                }
-                resp_id = c.get("response_id")
-                if resp_id:
-                    resp = (
-                        supabase.table("llm_responses")
-                        .select("llm_name, query_id")
-                        .eq("id", resp_id)
-                        .limit(1)
-                        .execute()
-                    )
-                    if resp.data:
-                        item["llm_name"] = resp.data[0].get("llm_name", "Unknown")
-                        query_id = resp.data[0].get("query_id")
-                        if query_id:
-                            q = supabase.table("queries").select("text").eq("id", query_id).limit(1).execute()
-                            if q.data:
-                                item["query_text"] = q.data[0].get("text", "")
-                hallucination_rows.append(item)
+                    "llm_name": resp_row.get("llm_name", "Unknown"),
+                    "query_text": query_map.get(resp_row.get("query_id", ""), ""),
+                })
         except Exception:
             pass
 

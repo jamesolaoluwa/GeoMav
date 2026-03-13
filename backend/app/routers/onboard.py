@@ -296,6 +296,8 @@ The queries should:
 - Include location if provided
 - Be specific to what this business actually offers, not generic
 
+IMPORTANT: Every query MUST be meaningfully different from the others. Do NOT generate near-duplicates or queries that differ only in phrasing. Each query should target a distinct intent or topic. For example, do NOT have both "best bakery near me" and "top bakery near me" — pick one.
+
 Return ONLY a JSON array of strings. No explanation, no markdown. Example:
 ["query one", "query two", "query three"]
 
@@ -306,6 +308,29 @@ Business profile:
 - Services: {services}
 - Location: {location}
 - Pricing: {pricing}"""
+
+
+def _deduplicate_queries(queries: list[str]) -> list[str]:
+    """Remove near-duplicate queries by normalizing and comparing."""
+    seen: set[str] = set()
+    unique: list[str] = []
+    for q in queries:
+        normalized = re.sub(r"[^a-z0-9 ]", "", q.lower().strip())
+        words = frozenset(normalized.split())
+        if len(words) < 2:
+            continue
+        is_dup = False
+        for s in seen:
+            existing_words = frozenset(s.split())
+            overlap = len(words & existing_words)
+            smaller = min(len(words), len(existing_words))
+            if smaller > 0 and overlap / smaller >= 0.8:
+                is_dup = True
+                break
+        if not is_dup:
+            seen.add(normalized)
+            unique.append(q)
+    return unique
 
 
 async def generate_smart_queries(profile: dict) -> list[str]:
@@ -341,7 +366,7 @@ async def generate_smart_queries(profile: dict) -> list[str]:
 
         queries = json.loads(content)
         if isinstance(queries, list) and all(isinstance(q, str) for q in queries):
-            return queries[:15]
+            return _deduplicate_queries(queries)[:15]
     except Exception as e:
         logger.warning("AI query generation failed: %s", e)
 
@@ -467,6 +492,8 @@ async def save_profile(req: OnboardSaveRequest):
                     location=location,
                 ))
 
+        smart_queries = _deduplicate_queries(smart_queries)
+
         queries = [
             {"text": q, "category": req.category, "business_id": business_id}
             for q in smart_queries
@@ -525,6 +552,7 @@ async def run_initial_scan(req: OnboardScanRequest, background_tasks: Background
         scan_query_ids = query_ids[:10] if len(query_ids) >= len(scan_prompts) else []
 
         from app.agents.analytics import run_analytics_scan
+        from app.agents.reinforcement import run_reinforcement
 
         async def _run_scan():
             try:
@@ -538,6 +566,33 @@ async def run_initial_scan(req: OnboardScanRequest, background_tasks: Background
                     business_id=req.business_id,
                 )
                 logger.info(f"Initial scan complete: {result.get('visibility_score', 0)}% visibility")
+
+                llm_response_dicts = [
+                    {
+                        "id": r["id"],
+                        "llm_name": r["llm_name"],
+                        "response_text": r["response_text"],
+                        "query_text": r["query_text"],
+                        "query_id": r.get("query_id"),
+                    }
+                    for r in result.get("results", [])
+                ]
+
+                await run_reinforcement(
+                    llm_responses=llm_response_dicts,
+                    business_profile=business,
+                    supabase_client=supabase,
+                )
+
+                try:
+                    from app import cache
+                    cache.invalidate_prefix("dashboard:")
+                    cache.invalidate_prefix("visibility:")
+                    cache.invalidate_prefix("sentiment:")
+                    cache.invalidate_prefix("competitors:")
+                except Exception:
+                    pass
+
             except Exception as e:
                 logger.error(f"Initial scan failed: {e}")
 

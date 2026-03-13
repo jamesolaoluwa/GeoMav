@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { api } from "@/lib/api";
+import { useUserId, useUserLoading } from "@/lib/UserContext";
 import type { JourneyData } from "@/lib/types";
 
 const PHASE_LABELS = [
@@ -15,15 +17,21 @@ const PHASE_LABELS = [
 
 export default function PhaseStepper() {
   const [journey, setJourney] = useState<JourneyData | null>(null);
+  const pathname = usePathname();
+  const userId = useUserId();
+  const userLoading = useUserLoading();
 
   useEffect(() => {
+    if (userLoading) return;
     api
-      .getJourney()
+      .getJourney(userId)
       .then((data) => setJourney(data as JourneyData))
       .catch(() => {});
-  }, []);
+  }, [pathname, userId, userLoading]);
 
-  const currentPhase = journey?.current_phase ?? 1;
+  if (userLoading || !journey) return null;
+
+  const currentPhase = journey.current_phase ?? 1;
 
   if (currentPhase > 2) return null;
 

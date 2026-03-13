@@ -23,7 +23,36 @@ VAGUE_INDICATORS = {
     "check their website", "contact them", "visit their", "i'm not sure",
     "i don't have", "not available", "no information", "for more details",
     "i recommend", "you should", "you might", "consider", "it depends",
+    "based on my analysis", "looking at the best", "according to recent",
+    "for this category", "popular options", "i would highlight",
+    "several other", "various features", "different needs",
+    "these recommendations", "without a specified", "most profitable",
 }
+
+GENERIC_RESPONSE_INDICATORS = {
+    "most profitable options", "high-margin", "saas", "affiliate marketing",
+    "online courses", "food trucks", "recurring revenue", "proven demand",
+    "digital scalability", "aging populations", "wellness demand",
+    "low-overhead", "[1]", "[2]", "[3]", "**",
+}
+
+
+def _is_generic_response(response_text: str) -> bool:
+    """Detect responses that are generic/off-topic rather than business-specific."""
+    text_lower = response_text.lower()
+    hits = sum(1 for ind in GENERIC_RESPONSE_INDICATORS if ind in text_lower)
+    return hits >= 3
+
+
+def _clean_claim_text(text: str) -> str:
+    """Clean up claim text for display — strip markdown, citations, and truncate."""
+    import re
+    cleaned = re.sub(r"\*\*", "", text)
+    cleaned = re.sub(r"\[[\d,\s]+\]", "", cleaned)
+    cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
+    if len(cleaned) > 200:
+        cleaned = cleaned[:197] + "..."
+    return cleaned
 
 
 def extract_claims(response_text: str, brand_keywords: list[str] | None = None) -> list[dict]:
@@ -33,6 +62,9 @@ def extract_claims(response_text: str, brand_keywords: list[str] | None = None) 
     factual assertion pattern are treated as claims. Generic advice and vague
     suggestions are skipped.
     """
+    if _is_generic_response(response_text):
+        return []
+
     claims = []
     sentences = [s.strip() for s in response_text.split(".") if len(s.strip()) > 15]
 
@@ -48,7 +80,7 @@ def extract_claims(response_text: str, brand_keywords: list[str] | None = None) 
         for pattern in CLAIM_PATTERNS:
             if any(kw in sentence_lower for kw in pattern["keywords"]):
                 claims.append({
-                    "text": sentence.strip(),
+                    "text": _clean_claim_text(sentence.strip()),
                     "type": pattern["type"],
                 })
                 break
@@ -160,6 +192,20 @@ def classify_claim(
     return None
 
 
+def _summarize_verified_value(verified_value: str, claim_type: str) -> str:
+    """Produce a concise verified value suitable for display."""
+    if not verified_value:
+        return "Not specified"
+    cleaned = verified_value.strip()
+    if len(cleaned) > 150:
+        items = [s.strip() for s in cleaned.replace("\n", ",").split(",") if s.strip()]
+        if len(items) > 5:
+            cleaned = ", ".join(items[:5]) + f" (+{len(items) - 5} more)"
+        else:
+            cleaned = cleaned[:147] + "..."
+    return cleaned
+
+
 def generate_correction(claim: dict, classification: dict) -> Optional[dict]:
     """Generate a structured correction for non-verified claims."""
     if classification["status"] == "verified":
@@ -169,8 +215,8 @@ def generate_correction(claim: dict, classification: dict) -> Optional[dict]:
         "id": str(uuid.uuid4()),
         "claim_text": claim["text"],
         "claim_type": claim["type"],
-        "claim_value": claim["text"],
-        "verified_value": classification["verified_value"],
+        "claim_value": _clean_claim_text(claim["text"]),
+        "verified_value": _summarize_verified_value(classification["verified_value"], claim["type"]),
         "status": "pending",
         "classification": classification["status"],
         "created_at": datetime.now(timezone.utc).isoformat(),

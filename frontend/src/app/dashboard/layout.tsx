@@ -364,7 +364,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -589,7 +589,7 @@ export default function DashboardLayout({
 
         {/* Page content */}
         <main className="flex-1 p-4 lg:p-8">
-          <UserContext.Provider value={{ userId: user?.id ?? null }}>
+          <UserContext.Provider value={{ userId: user?.id ?? null, userLoading }}>
             {children}
           </UserContext.Provider>
         </main>

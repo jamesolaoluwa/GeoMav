@@ -16,10 +16,24 @@ def list_hallucinations(user_id: Optional[str] = None):
     try:
         supabase = get_supabase()
         biz = resolve_business(supabase, user_id)
-        q = supabase.table("claims").select("*")
+
+        biz_response_ids: list[str] = []
         if biz:
-            q = q.eq("business_id", biz["id"])
-        claims_res = q.execute()
+            try:
+                q_res = supabase.table("queries").select("id").eq("business_id", biz["id"]).execute()
+                biz_query_ids = [r["id"] for r in (q_res.data or [])]
+                if biz_query_ids:
+                    r_res = supabase.table("llm_responses").select("id").in_("query_id", biz_query_ids).execute()
+                    biz_response_ids = [r["id"] for r in (r_res.data or [])]
+            except Exception:
+                pass
+
+        claims_query = supabase.table("claims").select("*")
+        if biz_response_ids:
+            claims_query = claims_query.in_("response_id", biz_response_ids)
+        elif biz:
+            return {"claims": [], "total": 0}
+        claims_res = claims_query.execute()
         claims = claims_res.data or []
 
         enriched = []
@@ -47,15 +61,15 @@ def list_hallucinations(user_id: Optional[str] = None):
                     item["llm_name"] = resp.data[0].get("llm_name", "Unknown")
                     query_id = resp.data[0].get("query_id")
                     if query_id:
-                        q = (
+                        qr = (
                             supabase.table("queries")
                             .select("text")
                             .eq("id", query_id)
                             .limit(1)
                             .execute()
                         )
-                        if q.data:
-                            item["query_text"] = q.data[0].get("text", "")
+                        if qr.data:
+                            item["query_text"] = qr.data[0].get("text", "")
             enriched.append(item)
 
         return {"claims": enriched, "total": len(enriched)}
