@@ -321,6 +321,30 @@ export const mockPrompts: Prompt[] = [
   { id: "p8", text: "Website builder for restaurants", category: "Industry", created_at: "2026-03-03T00:00:00Z" },
 ];
 
+export const mockHistoryComparison = {
+  period1: {
+    visibility_score: 38.2,
+    mention_count: 18,
+    claim_count: 3,
+    pending_claims: 2,
+    avg_sentiment: 0.58,
+  },
+  period2: {
+    visibility_score: 40.4,
+    mention_count: 24,
+    claim_count: 5,
+    pending_claims: 3,
+    avg_sentiment: 0.65,
+  },
+  deltas: {
+    visibility_score: 2.2,
+    mention_count: 6,
+    claim_count: 2,
+    pending_claims: 1,
+    avg_sentiment: 0.07,
+  },
+};
+
 export const mockBusinessProfile = {
   name: "Your Brand",
   website: "https://yourbrand.com",
