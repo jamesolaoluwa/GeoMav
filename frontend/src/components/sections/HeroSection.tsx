@@ -104,7 +104,7 @@ export default function HeroSection() {
             }}
           />
 
-          <div className="relative mx-auto aspect-[600/320] w-full max-w-[700px]">
+          <div className="relative mx-auto mt-4 aspect-[600/320] w-full max-w-[700px] md:mt-6">
             {/* SVG layer — connection lines, data pulses, radar rings */}
             <svg
               viewBox="0 0 600 320"
