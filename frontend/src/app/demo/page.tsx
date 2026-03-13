@@ -10,11 +10,9 @@ import Logo from "@/components/ui/Logo";
 // ══════════════════════════════════════════════════════════════════════════════
 
 const BUSINESS = {
-  name: "Rivera's Tacos",
-  tagline: "Family-owned taqueria · Austin, TX · Est. 2009",
-  emoji: "🌮",
-  story:
-    "Maria opened her restaurant using her late mother's recipes. 15 years of her life. She had no idea AI was telling the world she'd closed.",
+  name: "Philander Smith University",
+  tagline: "www.philander.edu",
+  emoji: "🎓",
 };
 
 const BEFORE = { visibility: 18, rank: 9, rankTotal: 10, accuracy: 42, hallucinations: 5 };
@@ -24,34 +22,34 @@ const LLM_SCANS = [
   {
     llm: "ChatGPT",
     dot: "#10a37f",
-    bad: "Rivera's Tacos permanently closed in 2020. The 418 S Congress Ave location is now vacant.",
+    bad: "Permanently closed in 2020. Location is now vacant.",
     claim: "Permanently closed in 2020",
     type: "Fabricated",
-    good: "Rivera's Tacos is open and operating. Founded 2009, still under original ownership.",
+    good: "Open and operating. Still under original ownership.",
   },
   {
     llm: "Gemini",
     dot: "#4285f4",
-    bad: "Previously known for authentic food but sold in 2022. New ownership — reviews are mixed.",
+    bad: "Previously known for quality but sold in 2022. New ownership — reviews are mixed.",
     claim: "Sold to new ownership in 2022",
     type: "Fabricated",
-    good: "Still owned and operated by Maria Rivera, founder since 2009.",
+    good: "Still owned and operated by the founding team.",
   },
   {
     llm: "Perplexity",
     dot: "#20b2aa",
-    bad: "Cash-only restaurant. No reservations, no takeout, no online ordering available.",
+    bad: "Cash-only. No reservations, no takeout, no online ordering available.",
     claim: "Cash only, no online ordering",
     type: "Outdated",
-    good: "Accepts all major cards, Apple Pay. Online ordering at riverastacos.com.",
+    good: "Accepts all major cards, Apple Pay. Online ordering available.",
   },
   {
     llm: "Claude",
     dot: "#d97706",
-    bad: "Small taqueria with a limited menu. No catering services or vegetarian options.",
+    bad: "Limited menu. No catering services or vegetarian options.",
     claim: "No catering or vegan options",
     type: "Fabricated",
-    good: "Full menu including vegan specials. Catering available for 10–300 guests.",
+    good: "Full menu including vegan options. Catering available.",
   },
   {
     llm: "Bing",
@@ -59,51 +57,37 @@ const LLM_SCANS = [
     bad: "Website outdated. Business status unknown — may no longer be operating.",
     claim: "Status unknown, possibly closed",
     type: "Misleading",
-    good: "Fully operational. Won Austin's Best Mexican Restaurant 2025.",
+    good: "Fully operational. Award-winning reputation.",
   },
   {
     llm: "DeepSeek",
     dot: "#6366f1",
-    bad: "No significant online presence or recent activity detected for this location.",
+    bad: "No significant online presence or recent activity detected.",
     claim: "No online presence detected",
     type: "Misleading",
-    good: "Active on Google, Yelp, Instagram. 4.8★ across 800+ reviews.",
+    good: "Active on Google, Yelp, Instagram. Strong reviews.",
   },
 ];
 
 const JSON_LD_SNIPPET = `{
   "@context": "https://schema.org",
-  "@type": "Restaurant",
-  "name": "Rivera's Tacos",
-  "foundingDate": "2009",
-  "openingHours": "Tu-Su 10:00-21:00",
-  "servesCuisine": "Mexican",
-  "hasMenu": "https://riverastacos.com/menu",
+  "@type": "LocalBusiness",
+  "name": "Your Business",
+  "openingHours": "Mo-Su 09:00-21:00",
   "acceptsReservations": true,
   "paymentAccepted": "Cash, Visa, Mastercard, Apple Pay",
   "priceRange": "$$",
-  "award": "Austin Best Mexican Restaurant 2025",
-  "menu": {
-    "hasMenuSection": [
-      { "name": "Tacos" },
-      { "name": "Vegan Specials" },
-      { "name": "Catering" }
-    ]
+  "url": "https://yourbusiness.com",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "123 Main St",
+    "addressLocality": "Your City"
   }
 }`;
 
 // ══════════════════════════════════════════════════════════════════════════════
 
 const TOTAL_SCENES = 8;
-
-// Per-scene auto-advance durations (ms). 0 = no auto-advance.
-const SCENE_DURATIONS: Record<number, number> = {
-  1: 7000,
-  3: 7000,
-  4: 8500,
-  5: 7000,
-  6: 8000,
-};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -125,16 +109,13 @@ function ClaimBadge({ type }: { type: string }) {
 function SceneIntro({ onStart }: { onStart: () => void }) {
   return (
     <div className="flex flex-col items-center text-center">
-      <div className="relative mb-8">
-        <div className="absolute inset-0 animate-ping rounded-full bg-[#8B7CB5]/20" />
-        <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-white/60 bg-white/50 shadow-sm backdrop-blur-md">
+      <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/60 bg-white/50 shadow-sm backdrop-blur-md">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#8B7CB5" strokeWidth="1.5">
             <circle cx="12" cy="12" r="3" />
             <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
             <path d="M2 12A10 10 0 0 1 12 2" strokeLinecap="round" opacity="0.4" />
             <path d="M12 22a10 10 0 0 1-10-10" strokeLinecap="round" opacity="0.2" />
           </svg>
-        </div>
       </div>
 
       <h1 className="text-4xl font-bold tracking-tight text-slate-800 sm:text-5xl">
@@ -143,8 +124,8 @@ function SceneIntro({ onStart }: { onStart: () => void }) {
       </h1>
 
       <p className="mx-auto mt-5 max-w-lg text-lg text-slate-600">
-        Follow one restaurant&apos;s journey — from invisible and misrepresented,
-        to accurately found by every AI assistant on the internet.
+        See how AI platforms represent your business across ChatGPT, Gemini,
+        Claude, and more.
       </p>
 
       <div className="mt-10 flex items-center gap-4 rounded-2xl border border-white/60 bg-white/50 px-6 py-4 shadow-sm backdrop-blur-md">
@@ -161,16 +142,16 @@ function SceneIntro({ onStart }: { onStart: () => void }) {
         onClick={onStart}
         className="mt-8 rounded-xl bg-[#8B7CB5] px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-[#8B7CB5]/20 transition hover:bg-[#9d8ec8] hover:shadow-lg active:scale-95"
       >
-        Watch the story →
+        Check AI visibility →
       </button>
-      <p className="mt-3 text-xs text-slate-500">Auto-advances · Use controls below to navigate</p>
+      <p className="mt-3 text-xs text-slate-500">Use controls below to navigate</p>
     </div>
   );
 }
 
 // ─── Scene 1: The Problem ────────────────────────────────────────────────────
 
-function SceneProblem() {
+function SceneProblem({ onStartScan }: { onStartScan: () => void }) {
   return (
     <div>
       <div className="mb-8 text-center">
@@ -178,10 +159,9 @@ function SceneProblem() {
           The Problem
         </span>
         <h2 className="mt-4 text-3xl font-bold text-slate-800">
-          Someone searched for {BUSINESS.name}.<br />
-          <span className="text-red-600">This is what AI told them.</span>
+          Here&apos;s what AI says about your business.<br />
+          <span className="text-red-600">Inaccurate claims detected.</span>
         </h2>
-        <p className="mt-3 text-sm italic text-slate-600">{BUSINESS.story}</p>
       </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -214,12 +194,12 @@ function SceneProblem() {
         </p>
         <div className="flex flex-wrap justify-center gap-2">
           {[
-            "✓ Open since 2009",
-            "✓ Still owned by Maria",
+            "✓ Open and operating",
+            "✓ Original ownership",
             "✓ Accepts all cards",
             "✓ Online ordering",
             "✓ Catering available",
-            "✓ Vegan menu",
+            "✓ Full menu options",
           ].map((f) => (
             <span
               key={f}
@@ -230,6 +210,15 @@ function SceneProblem() {
           ))}
         </div>
       </motion.div>
+
+      <div className="mt-8 flex justify-center">
+        <button
+          onClick={onStartScan}
+          className="rounded-xl bg-[#8B7CB5] px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-[#8B7CB5]/20 transition hover:bg-[#9d8ec8] hover:shadow-lg active:scale-95"
+        >
+          Start AI scan →
+        </button>
+      </div>
     </div>
   );
 }
@@ -244,7 +233,7 @@ function SceneScan({ scannedCount }: { scannedCount: number }) {
           Scanning
         </span>
         <h2 className="mt-4 text-3xl font-bold text-slate-800">GeoMav queries every AI platform.</h2>
-        <p className="mt-3 text-slate-600">Extracting every claim made about {BUSINESS.name}.</p>
+        <p className="mt-3 text-slate-600">Extracting every claim made about your business.</p>
       </div>
 
       <div className="space-y-2.5">
@@ -323,7 +312,7 @@ function SceneScan({ scannedCount }: { scannedCount: number }) {
 
 // ─── Scene 3: Issues ─────────────────────────────────────────────────────────
 
-function SceneIssues() {
+function SceneIssues({ onGenerateCorrections }: { onGenerateCorrections: () => void }) {
   return (
     <div>
       <div className="mb-8 text-center">
@@ -332,7 +321,7 @@ function SceneIssues() {
         </span>
         <h2 className="mt-4 text-3xl font-bold text-slate-800">Every AI. Every claim. Classified.</h2>
         <p className="mt-3 text-slate-600">
-          GeoMav extracted and verified each incorrect claim against the verified business profile.
+          GeoMav extracted and verified each incorrect claim against your verified business profile.
         </p>
       </div>
 
@@ -385,9 +374,18 @@ function SceneIssues() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
         <p className="text-sm text-slate-700">
-          GeoMav is generating corrections — structured data, /llms.txt, and FAQ schemas for every platform.
+          GeoMav is generating corrections for your business — structured data, /llms.txt, and FAQ schemas.
         </p>
       </motion.div>
+
+      <div className="mt-8 flex justify-center">
+        <button
+          onClick={onGenerateCorrections}
+          className="rounded-xl bg-[#8B7CB5] px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-[#8B7CB5]/20 transition hover:bg-[#9d8ec8] hover:shadow-lg active:scale-95"
+        >
+          Generate corrections →
+        </button>
+      </div>
     </div>
   );
 }
@@ -477,17 +475,25 @@ function SceneFix({ typedText }: { typedText: string }) {
 
 // ─── Scene 5: Re-scan ────────────────────────────────────────────────────────
 
-function SceneRescan() {
+function SceneRescan({ onComplete }: { onComplete: () => void }) {
   const [greenCount, setGreenCount] = useState(0);
 
   useEffect(() => {
     let i = 0;
     const t = setInterval(() => {
-      setGreenCount(++i);
+      i++;
+      setGreenCount(i);
       if (i >= LLM_SCANS.length) clearInterval(t);
     }, 420);
     return () => clearInterval(t);
   }, []);
+
+  useEffect(() => {
+    if (greenCount >= LLM_SCANS.length) {
+      const timeout = setTimeout(onComplete, 1500);
+      return () => clearTimeout(timeout);
+    }
+  }, [greenCount, onComplete]);
 
   return (
     <div>
@@ -497,7 +503,7 @@ function SceneRescan() {
         </span>
         <h2 className="mt-4 text-3xl font-bold text-slate-800">Confirming corrections across every AI.</h2>
         <p className="mt-3 text-slate-600">
-          GeoMav re-queries all platforms to verify the corrections took effect.
+          GeoMav re-queries all platforms to verify your corrections took effect.
         </p>
       </div>
 
@@ -555,10 +561,12 @@ function SceneAfter({
   vis,
   rank,
   hall,
+  onContinue,
 }: {
   vis: number;
   rank: number;
   hall: number;
+  onContinue: () => void;
 }) {
   return (
     <div>
@@ -567,7 +575,7 @@ function SceneAfter({
           After GeoMav
         </span>
         <h2 className="mt-4 text-3xl font-bold text-slate-900">
-          {BUSINESS.name} is seen clearly.<br />
+          Your business is seen clearly.<br />
           <span className="text-emerald-700">Everywhere that matters.</span>
         </h2>
       </div>
@@ -612,13 +620,22 @@ function SceneAfter({
           </motion.div>
         ))}
       </div>
+
+      <div className="mt-8 flex justify-center">
+        <button
+          onClick={onContinue}
+          className="rounded-xl bg-[#8B7CB5] px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-[#8B7CB5]/20 transition hover:bg-[#9d8ec8] hover:shadow-lg active:scale-95"
+        >
+          Continue →
+        </button>
+      </div>
     </div>
   );
 }
 
-// ─── Scene 7: CTA ────────────────────────────────────────────────────────────
+// ─── Scene 7: Report ready ───────────────────────────────────────────────────
 
-function SceneCTA() {
+function SceneReportReady() {
   return (
     <div className="flex flex-col items-center text-center">
       <motion.div
@@ -633,13 +650,13 @@ function SceneCTA() {
       </motion.div>
 
       <h2 className="text-4xl font-bold text-slate-800">
-        This is GeoMav.<br />
-        <span className="text-[#7B6B9B]">Real visibility. No more guessing.</span>
+        Your AI visibility report is ready.<br />
+        <span className="text-[#7B6B9B]">Corrections applied and verified.</span>
       </h2>
 
       <p className="mx-auto mt-5 max-w-md text-lg text-slate-600">
-        Every business deserves to be seen accurately by AI.
-        Start with a free AI Brand Audit — takes 2 minutes.
+        Your business is now accurately represented across all AI platforms.
+        Re-run scans anytime to monitor changes.
       </p>
 
       <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
@@ -647,15 +664,15 @@ function SceneCTA() {
           href="/signup"
           className="rounded-xl bg-[#8B7CB5] px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-[#8B7CB5]/25 transition hover:bg-[#9d8ec8] hover:shadow-lg active:scale-95"
         >
-          Start your free audit →
+          Go to dashboard →
         </Link>
         <Link href="/" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">
-          Learn more about GeoMav
+          Back to home
         </Link>
       </div>
 
       <p className="mt-6 text-xs text-slate-500">
-        No credit card · Works for any business · No AI experience needed
+        Demo complete · Sign up to monitor your own business
       </p>
     </div>
   );
@@ -678,15 +695,7 @@ export default function DemoPage() {
   const prev = useCallback(() => goTo(scene - 1), [scene, goTo]);
   const next = useCallback(() => goTo(scene + 1), [scene, goTo]);
 
-  // Auto-advance (scene 0 waits for user click; scene 2 is self-managing; scene 7 is CTA)
-  useEffect(() => {
-    const duration = SCENE_DURATIONS[scene];
-    if (!duration) return;
-    const t = setTimeout(() => setScene((s) => s + 1), duration);
-    return () => clearTimeout(t);
-  }, [scene]);
-
-  // Scene 2: sequential scan animation → auto-advance when done
+  // Scene 2: sequential scan animation → auto-advance when AI finishes scanning
   useEffect(() => {
     if (scene !== 2) { setScannedCount(0); return; }
     let count = 0;
@@ -695,21 +704,28 @@ export default function DemoPage() {
       setScannedCount(count);
       if (count >= LLM_SCANS.length) {
         clearInterval(t);
-        setTimeout(() => setScene(3), 1800);
+        setTimeout(() => setScene(3), 1500);
       }
     }, 650);
     return () => clearInterval(t);
   }, [scene]);
 
-  // Scene 4: typewriter
+  // Scene 4: typewriter → auto-advance when AI finishes generating
   useEffect(() => {
     if (scene !== 4) { setTypedText(""); return; }
     let i = 0;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const t = setInterval(() => {
       setTypedText(JSON_LD_SNIPPET.slice(0, ++i));
-      if (i >= JSON_LD_SNIPPET.length) clearInterval(t);
+      if (i >= JSON_LD_SNIPPET.length) {
+        clearInterval(t);
+        timeoutId = setTimeout(() => setScene(5), 1500);
+      }
     }, 16);
-    return () => clearInterval(t);
+    return () => {
+      clearInterval(t);
+      if (timeoutId !== null) clearTimeout(timeoutId);
+    };
   }, [scene]);
 
   // Scene 6: animated counters
@@ -780,13 +796,13 @@ export default function DemoPage() {
               transition={{ duration: 0.35 }}
             >
               {scene === 0 && <SceneIntro onStart={next} />}
-              {scene === 1 && <SceneProblem />}
+              {scene === 1 && <SceneProblem onStartScan={next} />}
               {scene === 2 && <SceneScan scannedCount={scannedCount} />}
-              {scene === 3 && <SceneIssues />}
+              {scene === 3 && <SceneIssues onGenerateCorrections={next} />}
               {scene === 4 && <SceneFix typedText={typedText} />}
-              {scene === 5 && <SceneRescan />}
-              {scene === 6 && <SceneAfter vis={afterVis} rank={afterRank} hall={afterHall} />}
-              {scene === 7 && <SceneCTA />}
+              {scene === 5 && <SceneRescan onComplete={() => setScene(6)} />}
+              {scene === 6 && <SceneAfter vis={afterVis} rank={afterRank} hall={afterHall} onContinue={next} />}
+              {scene === 7 && <SceneReportReady />}
             </motion.div>
           </AnimatePresence>
         </div>
