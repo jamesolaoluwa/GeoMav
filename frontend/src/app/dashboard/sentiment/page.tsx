@@ -22,6 +22,13 @@ import {
 } from "@/data/mock";
 import type { Sentiment } from "@/lib/types";
 
+type QueryResponseRow = {
+  id: string;
+  query: string;
+  llm_name: string;
+  sentiment: "positive" | "neutral" | "negative";
+};
+
 const TIME_FILTERS = [
   { value: "all_time", label: "All Time" },
   { value: "daily", label: "Daily" },
@@ -134,16 +141,21 @@ export default function SentimentPage() {
       : [];
 
   const VALID_SENTIMENTS = new Set(["positive", "neutral", "negative"]);
-  const queryResponses =
+  const queryResponses: QueryResponseRow[] =
     data?.query_responses?.length > 0
       ? data.query_responses
           .filter((r: { sentiment: string }) => VALID_SENTIMENTS.has(r.sentiment))
-          .map((r: { id: string; query: string; llm_name: string; sentiment: string }, i: number) => ({
-            id: r.id || `qr-${i}`,
-            query: r.query,
-            llm_name: r.llm_name,
-            sentiment: r.sentiment as "positive" | "neutral" | "negative",
-          }))
+          .map(
+            (
+              r: { id: string; query: string; llm_name: string; sentiment: string },
+              i: number,
+            ): QueryResponseRow => ({
+              id: r.id || `qr-${i}`,
+              query: r.query,
+              llm_name: r.llm_name,
+              sentiment: r.sentiment as "positive" | "neutral" | "negative",
+            }),
+          )
       : [];
 
   if (loading && !data) {

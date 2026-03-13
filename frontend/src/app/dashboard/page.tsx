@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   LineChart,
@@ -164,7 +164,7 @@ function MetricsLoadingState() {
   );
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all_time");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -598,5 +598,13 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<MetricsLoadingState />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
