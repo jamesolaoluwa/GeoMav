@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 interface LogoProps {
   variant?: "dark" | "light";
@@ -9,10 +10,7 @@ export default function Logo({ variant = "dark", className = "" }: LogoProps) {
   const isLight = variant === "light";
 
   return (
-    <span
-      className={`inline-flex items-center gap-3 ${className}`}
-      aria-label="GeoMav home"
-    >
+    <Link href="/" aria-label="GeoMav home" className={`inline-flex items-center gap-3 ${className}`}>
       <Image
         src="/images/GeoMavLogo.png"
         alt="GeoMav"
@@ -21,6 +19,6 @@ export default function Logo({ variant = "dark", className = "" }: LogoProps) {
         priority={variant === "dark"}
         className={`h-9 w-auto md:h-10 ${isLight ? "brightness-110" : ""}`}
       />
-    </span>
+    </Link>
   );
 }

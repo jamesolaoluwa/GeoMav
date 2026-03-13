@@ -141,6 +141,7 @@ function SceneIntro({ onStart }: { onStart: () => void }) {
         Gemini, Claude, and more.
       </p>
 
+
       <div className="mt-10 flex items-center gap-4 rounded-2xl border border-white/60 bg-white/50 px-6 py-4 shadow-sm backdrop-blur-md">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#8B7CB5]/15 text-2xl">
           {BUSINESS.emoji}
@@ -175,6 +176,9 @@ function SceneProblem({ onStartScan }: { onStartScan: () => void }) {
           Here&apos;s what AI says about Jasmine&apos;s bakery.<br />
           <span className="text-red-600">Inaccurate claims detected.</span>
         </h2>
+        <p className="mt-3 max-w-2xl mx-auto text-sm text-slate-600">
+          We send realistic search questions to major AI assistants to see if Jasmine&apos;s bakery appears in their answers, then compare what AI says with Jasmine&apos;s verified business information.
+        </p>
       </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -276,8 +280,8 @@ function SceneScan({ scannedCount }: { scannedCount: number }) {
         <span className="rounded-full border border-[#8B7CB5]/30 bg-[#8B7CB5]/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#7B6B9B] backdrop-blur-sm">
           Scanning
         </span>
-  <h2 className="mt-4 text-3xl font-bold text-slate-800">GeoMav queries every AI platform.</h2>
-  <p className="mt-3 text-slate-600">Extracting every claim made about Jasmine&apos;s bakery.</p>
+        <h2 className="mt-4 text-3xl font-bold text-slate-800">GeoMav queries every AI platform.</h2>
+        <p className="mt-3 text-slate-600">Extracting every claim made about Jasmine&apos;s bakery.</p>
       </div>
 
       <div className="space-y-2.5">
