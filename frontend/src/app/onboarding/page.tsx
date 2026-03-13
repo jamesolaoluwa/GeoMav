@@ -474,7 +474,7 @@ export default function OnboardingPage() {
               <button
                 onClick={async () => {
                   try { await api.advanceJourney(); } catch { /* best effort */ }
-                  router.push("/dashboard");
+                  router.push("/dashboard?fresh=1");
                 }}
                 className="mt-8 w-full rounded-xl bg-[#1a1225] px-6 py-3.5 text-sm font-medium text-white transition-colors hover:bg-[#2D2440]"
               >
