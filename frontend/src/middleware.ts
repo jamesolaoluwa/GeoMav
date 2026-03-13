@@ -36,6 +36,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/signin", request.url));
   }
 
+  // Authenticated users on dashboard without completing onboarding
+  if (isDashboardRoute && user) {
+    const hasOnboarded =
+      request.cookies.get("geomav_onboarded")?.value === "true";
+    if (!hasOnboarded) {
+      return NextResponse.redirect(new URL("/onboarding", request.url));
+    }
+  }
+
   // Authenticated users on auth pages -- check if they have a business already
   if (isAuthRoute && user) {
     const hasOnboarded =

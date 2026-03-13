@@ -107,7 +107,7 @@ export default function OpportunitiesPage() {
         setOpportunities(mapped);
       })
       .catch(() => {
-        setOpportunities(mockOpportunities);
+        setOpportunities([]);
       })
       .finally(() => setLoading(false));
   }, []);

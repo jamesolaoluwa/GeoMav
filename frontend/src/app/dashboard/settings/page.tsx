@@ -46,7 +46,7 @@ function getInitials(displayName: string | undefined, email: string | undefined)
 export default function SettingsPage() {
   const router = useRouter();
   const { user, isDummyUser } = useUser();
-  const [profile, setProfile] = useState(mockBusinessProfile);
+  const [profile, setProfile] = useState({ name: "", website: "", category: "", description: "" });
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const userDisplayName =
@@ -101,15 +101,15 @@ export default function SettingsPage() {
         const biz = data as { name?: string; website?: string; category?: string; description?: string };
         if (cancelled) return;
         setProfile({
-          name: String(biz?.name ?? mockBusinessProfile.name),
-          website: String(biz?.website ?? mockBusinessProfile.website),
-          category: String(biz?.category ?? mockBusinessProfile.category),
-          description: String(biz?.description ?? mockBusinessProfile.description),
+          name: String(biz?.name ?? ""),
+          website: String(biz?.website ?? ""),
+          category: String(biz?.category ?? ""),
+          description: String(biz?.description ?? ""),
         });
       })
       .catch(() => {
         if (cancelled) return;
-        setProfile(mockBusinessProfile);
+        setProfile({ name: "", website: "", category: "", description: "" });
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

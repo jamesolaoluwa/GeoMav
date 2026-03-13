@@ -102,7 +102,7 @@ export default function HallucinationsPage() {
         setHallucinations(mapped);
       })
       .catch(() => {
-        setHallucinations(mockHallucinations);
+        setHallucinations([]);
       })
       .finally(() => setLoading(false));
   }, []);

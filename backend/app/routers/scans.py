@@ -1,6 +1,7 @@
 import logging
 import uuid
 from datetime import datetime, timezone
+from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks
 
@@ -48,7 +49,7 @@ async def _run_scan_task(business_id: str):
         logger.error("Background scan failed: %s", exc)
 
 
-def _post_scan_alerts(supabase, user_id: str | None, scan_start: str):
+def _post_scan_alerts(supabase, user_id: Optional[str], scan_start: str):
     """Check for new claims since scan_start and send hallucination alerts if enabled."""
     if not user_id:
         return

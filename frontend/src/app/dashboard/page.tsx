@@ -176,19 +176,19 @@ export default function DashboardPage() {
 
   const metrics = data
     ? {
-        visibility_score: data.visibility_score ?? mockDashboardMetrics.visibility_score,
-        visibility_change: data.visibility_change ?? mockDashboardMetrics.visibility_change,
-        brand_ranking: data.brand_ranking ?? mockDashboardMetrics.brand_ranking,
-        brand_ranking_total: data.brand_ranking_total ?? mockDashboardMetrics.brand_ranking_total,
-        claim_accuracy: data.claim_accuracy ?? mockDashboardMetrics.claim_accuracy,
-        claim_accuracy_change: data.claim_accuracy_change ?? mockDashboardMetrics.claim_accuracy_change,
-        active_hallucinations: data.active_hallucinations ?? mockDashboardMetrics.active_hallucinations,
+        visibility_score: data.visibility_score ?? 0,
+        visibility_change: data.visibility_change ?? 0,
+        brand_ranking: data.brand_ranking ?? 0,
+        brand_ranking_total: data.brand_ranking_total ?? 0,
+        claim_accuracy: data.claim_accuracy ?? 0,
+        claim_accuracy_change: data.claim_accuracy_change ?? 0,
+        active_hallucinations: data.active_hallucinations ?? 0,
       }
     : mockDashboardMetrics;
 
   const visibilityTrend = data?.visibility_trend?.length
     ? data.visibility_trend.map((d: { date: string; score: number }) => ({ date: d.date, score: d.score }))
-    : mockVisibilityTrend;
+    : [];
 
   const llmBreakdown: LLMBreakdown[] = data?.llm_breakdown?.length
     ? data.llm_breakdown.map((r: any) => ({
@@ -197,7 +197,7 @@ export default function DashboardPage() {
         total_queries: r.mentions ?? r.total_queries ?? 0,
         avg_rank: r.avg_rank ?? 5,
       }))
-    : mockLLMBreakdown;
+    : [];
 
   const competitors: CompetitorVisibility[] = data?.competitors?.length
     ? data.competitors.map((c: any) => ({
@@ -205,9 +205,9 @@ export default function DashboardPage() {
         visibility_score: c.visibility ?? c.visibility_score ?? 0,
         change: c.change ?? 0,
       }))
-    : mockCompetitors;
+    : [];
 
-  const hallucinations: typeof mockHallucinations = data?.hallucinations ?? mockHallucinations;
+  const hallucinations: typeof mockHallucinations = data?.hallucinations ?? [];
 
   if (loading && !data) {
     return <LoadingSkeleton />;

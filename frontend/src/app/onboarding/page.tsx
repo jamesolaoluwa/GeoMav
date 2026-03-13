@@ -109,6 +109,11 @@ export default function OnboardingPage() {
     try {
       const res: any = await api.saveOnboardProfile(profile);
       setBusinessId(res.business_id);
+      setScanResults((prev: any) => ({
+        ...prev,
+        queries: res.queries || [],
+        queries_count: res.queries_generated || 0,
+      }));
       document.cookie = "geomav_onboarded=true; path=/; max-age=31536000";
       setStep(2);
       handleScan(res.business_id);
@@ -122,17 +127,19 @@ export default function OnboardingPage() {
     setScanning(true);
     try {
       const res: any = await api.runOnboardScan(bizId);
-      setScanResults(res);
+      setScanResults((prev: any) => ({ ...prev, ...res }));
+      const queryCount = res.queries_count || 10;
+      const waitMs = Math.max(8000, queryCount * 3000);
       setTimeout(() => {
         setScanning(false);
         setScanComplete(true);
         setStep(3);
-      }, 4000);
+      }, waitMs);
     } catch (e: any) {
       setScanning(false);
       setScanComplete(true);
       setStep(3);
-      setScanResults({ status: "completed_with_errors" });
+      setScanResults((prev: any) => ({ ...prev, status: "completed_with_errors" }));
     }
   };
 
@@ -365,10 +372,26 @@ export default function OnboardingPage() {
                 ))}
               </div>
 
+              {scanResults?.queries && (
+                <div className="mt-8 rounded-xl border border-gray-200 p-5">
+                  <h3 className="mb-3 text-sm font-semibold text-gray-900">
+                    Queries being sent ({scanResults.queries.length})
+                  </h3>
+                  <ul className="space-y-1.5">
+                    {scanResults.queries.map((q: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                        <span className="mt-0.5 text-[#8B7CB5]">&bull;</span>
+                        &ldquo;{q}&rdquo;
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {scanning && (
                 <div className="mt-8 text-center">
                   <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-[#8B7CB5]" />
-                  <p className="mt-3 text-sm text-gray-500">This usually takes about 30 seconds...</p>
+                  <p className="mt-3 text-sm text-gray-500">Scanning {scanResults?.queries_count || 5} queries across {LLM_LIST.length} LLMs... this takes about 30-60 seconds.</p>
                 </div>
               )}
             </div>

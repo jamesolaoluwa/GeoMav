@@ -41,7 +41,7 @@ function isShoppingResultArray(arr: unknown): arr is ShoppingResult[] {
 
 export default function ShoppingPage() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all_time");
-  const [results, setResults] = useState<ShoppingResult[]>(mockShoppingResults);
+  const [results, setResults] = useState<ShoppingResult[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,12 +56,12 @@ export default function ShoppingPage() {
         if (isShoppingResultArray(arr)) {
           setResults(arr);
         } else {
-          setResults(mockShoppingResults);
+          setResults([]);
         }
       })
       .catch(() => {
         if (cancelled) return;
-        setResults(mockShoppingResults);
+        setResults([]);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

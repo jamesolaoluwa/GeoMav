@@ -168,14 +168,19 @@ export default function VisibilityPage() {
       .finally(() => setLoading(false));
   }, [timeFilter]);
 
-  const handleCompare = () => {
+  const handleCompare = async () => {
     if (!p1Start || !p1End || !p2Start || !p2End) return;
     setComparing(true);
-    api
-      .getHistoryComparison("", p1Start, p1End, p2Start, p2End)
-      .then((res: unknown) => setComparison(res as ComparisonData))
-      .catch(() => setComparison(null))
-      .finally(() => setComparing(false));
+    try {
+      const biz = (await api.getBusiness()) as { id?: string } | null;
+      const businessId = (biz as any)?.id || "";
+      const res = await api.getHistoryComparison(businessId, p1Start, p1End, p2Start, p2End);
+      setComparison(res as ComparisonData);
+    } catch {
+      setComparison(null);
+    } finally {
+      setComparing(false);
+    }
   };
 
   const visibilityTrend =
@@ -184,7 +189,7 @@ export default function VisibilityPage() {
           date: d.date,
           score: d.score,
         }))
-      : mockVisibilityTrend;
+      : [];
 
   const brandRankings: CompetitorVisibility[] =
     data?.brand_rankings?.length > 0
@@ -193,13 +198,13 @@ export default function VisibilityPage() {
           visibility_score: r.score ?? r.visibility_score ?? 0,
           change: r.change ?? 0,
         }))
-      : mockCompetitors;
+      : [];
 
   const topicRankings =
     data?.topic_rankings?.length > 0 &&
     data.topic_rankings.some((t: any) => Array.isArray(t.rankings))
       ? (data.topic_rankings as TopicRanking[])
-      : mockTopicRankings;
+      : [];
 
   const queryResponses: typeof mockQueryResponses = data?.query_responses?.length > 0
     ? data.query_responses.map((q: { query: string; response_rate: number }, i: number) => ({
@@ -210,7 +215,7 @@ export default function VisibilityPage() {
         rank: null as number | null,
         sentiment: "neutral" as const,
       }))
-    : mockQueryResponses;
+    : [];
 
   if (loading && !data) {
     return <LoadingSkeleton />;

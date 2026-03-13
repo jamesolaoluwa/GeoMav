@@ -74,7 +74,7 @@ function normalizeSection(s: { id: string; section?: string; type?: string; titl
 
 export default function ContentPage() {
   const [activeTab, setActiveTab] = useState<ContentSection["type"]>("summary");
-  const [sections, setSections] = useState<ContentSection[]>(mockContentSections);
+  const [sections, setSections] = useState<ContentSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [editedContent, setEditedContent] = useState<Record<string, string>>({});
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -96,8 +96,8 @@ export default function ContentPage() {
       })
       .catch(() => {
         if (cancelled) return;
-        setSections(mockContentSections);
-        setEditedContent(Object.fromEntries(mockContentSections.map((s) => [s.id, s.content])));
+        setSections([]);
+        setEditedContent({});
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

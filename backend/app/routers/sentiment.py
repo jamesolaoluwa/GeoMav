@@ -89,10 +89,26 @@ def get_sentiment(filter: Optional[str] = None):
 
         overall = _sentiment_ratios(all_sentiments) if all_sentiments else MOCK_FALLBACK["overall_sentiment"]
 
+        query_responses = []
+        for m in mentions:
+            rid = m.get("response_id")
+            llm_name = "Unknown"
+            if rid and rid in {r for r in resp_ids}:
+                for llm, sents in llm_sentiments.items():
+                    llm_name = llm
+                    break
+            query_responses.append({
+                "id": m.get("id", ""),
+                "query": m.get("query_text") or m.get("source", "Unknown query"),
+                "llm_name": llm_name,
+                "sentiment": m.get("sentiment", "neutral"),
+            })
+
         return {
             "sentiment_trends": sentiment_trends or MOCK_FALLBACK["sentiment_trends"],
             "sentiment_by_llm": sentiment_by_llm or MOCK_FALLBACK["sentiment_by_llm"],
             "overall_sentiment": overall,
+            "query_responses": query_responses,
             "filter_applied": filter or "all_time",
         }
 

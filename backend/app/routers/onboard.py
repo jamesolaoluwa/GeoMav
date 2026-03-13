@@ -273,16 +273,79 @@ async def extract_with_ai(website_text: str, url: str) -> Optional[dict]:
         return None
 
 
-QUERY_TEMPLATES = [
+FALLBACK_TEMPLATES = [
     "best {category} near me",
     "best {category} 2026",
     "top {category} services",
-    "affordable {category}",
-    "{category} reviews",
-    "best {category} for small business",
     "{name} reviews",
     "is {name} good",
+    "what is {name}",
+    "tell me about {name}",
+    "{name} vs competitors",
+    "recommend a {category}",
+    "{name} pricing",
 ]
+
+QUERY_GEN_PROMPT = """You are a GEO (Generative Engine Optimization) expert. Given a business profile, generate 15 realistic search queries that a potential customer would type into an AI assistant (ChatGPT, Claude, Perplexity, etc.) when looking for this type of business or its specific services.
+
+The queries should:
+- Be natural language questions/searches a real person would ask
+- Cover the business name directly (e.g. "is [name] good", "tell me about [name]")
+- Cover the business category and services (e.g. "best [service] in [location]")
+- Cover comparison and recommendation queries (e.g. "top [category] companies")
+- Include location if provided
+- Be specific to what this business actually offers, not generic
+
+Return ONLY a JSON array of strings. No explanation, no markdown. Example:
+["query one", "query two", "query three"]
+
+Business profile:
+- Name: {name}
+- Category: {category}
+- Description: {description}
+- Services: {services}
+- Location: {location}
+- Pricing: {pricing}"""
+
+
+async def generate_smart_queries(profile: dict) -> list[str]:
+    """Use GPT to generate business-specific queries from the full profile."""
+    settings = get_settings()
+    if not settings.openai_api_key:
+        return []
+
+    try:
+        from openai import AsyncOpenAI
+        client = AsyncOpenAI(api_key=settings.openai_api_key, timeout=20)
+
+        prompt = QUERY_GEN_PROMPT.format(
+            name=profile.get("name", ""),
+            category=profile.get("category", "Business"),
+            description=profile.get("description", ""),
+            services=profile.get("services", ""),
+            location=profile.get("location", ""),
+            pricing=profile.get("pricing", ""),
+        )
+
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=600,
+            temperature=0.7,
+        )
+
+        content = (response.choices[0].message.content or "").strip()
+        if content.startswith("```"):
+            content = re.sub(r"^```(?:json)?\s*", "", content)
+            content = re.sub(r"\s*```$", "", content)
+
+        queries = json.loads(content)
+        if isinstance(queries, list) and all(isinstance(q, str) for q in queries):
+            return queries[:15]
+    except Exception as e:
+        logger.warning("AI query generation failed: %s", e)
+
+    return []
 
 
 @router.post("/onboard")
@@ -382,18 +445,32 @@ async def save_profile(req: OnboardSaveRequest):
 
         business_id = business["id"]
 
-        # Generate queries from templates
-        queries = []
-        for template in QUERY_TEMPLATES:
-            query_text = template.format(
-                category=req.category.lower(),
-                name=req.name,
-            )
-            queries.append({
-                "text": query_text,
-                "category": req.category,
-                "business_id": business_id,
-            })
+        profile = {
+            "name": req.name,
+            "category": req.category,
+            "description": req.description or "",
+            "services": req.services or "",
+            "location": req.location or "",
+            "pricing": req.pricing or "",
+        }
+        smart_queries = await generate_smart_queries(profile)
+
+        if not smart_queries:
+            location = req.location or ""
+            smart_queries = []
+            for template in FALLBACK_TEMPLATES:
+                if "{location}" in template and not location:
+                    continue
+                smart_queries.append(template.format(
+                    category=req.category.lower(),
+                    name=req.name,
+                    location=location,
+                ))
+
+        queries = [
+            {"text": q, "category": req.category, "business_id": business_id}
+            for q in smart_queries
+        ]
 
         if queries:
             supabase.table("queries").insert(queries).execute()
@@ -402,6 +479,7 @@ async def save_profile(req: OnboardSaveRequest):
             "business_id": business_id,
             "business": business,
             "queries_generated": len(queries),
+            "queries": smart_queries,
         }
 
     except HTTPException:
@@ -430,13 +508,14 @@ async def run_initial_scan(req: OnboardScanRequest, background_tasks: Background
         if not prompts:
             prompts = [f"best {business.get('category', 'business')} near me"]
 
-        # Run scan in background
+        scan_prompts = prompts[:10]
+
         from app.agents.analytics import run_analytics_scan
 
         async def _run_scan():
             try:
                 result = await run_analytics_scan(
-                    prompts=prompts[:5],
+                    prompts=scan_prompts,
                     business_name=business.get("name", ""),
                     supabase_client=supabase,
                 )
@@ -452,7 +531,8 @@ async def run_initial_scan(req: OnboardScanRequest, background_tasks: Background
             "job_id": job_id,
             "status": "scanning",
             "business_name": business.get("name", ""),
-            "queries_count": len(prompts[:5]),
+            "queries_count": len(scan_prompts),
+            "queries": scan_prompts,
             "llms": ["ChatGPT", "Gemini", "Claude", "Perplexity", "Bing", "DeepSeek"],
         }
 

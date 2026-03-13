@@ -91,7 +91,7 @@ export default function SentimentPage() {
           neutral: toPct(d.neutral),
           negative: toPct(d.negative),
         }))
-      : mockSentimentTrend;
+      : [];
 
   const sentimentStackData =
     data?.sentiment_by_llm?.length > 0
@@ -101,14 +101,17 @@ export default function SentimentPage() {
           neutral: toPct(r.neutral),
           negative: toPct(r.negative),
         }))
-      : mockSentimentByLLM.map((row) => ({
-          llm_name: row.llm_name,
-          positive: row.positive,
-          neutral: row.neutral,
-          negative: row.negative,
-        }));
+      : [];
 
-  const queryResponses = mockQueryResponses;
+  const queryResponses =
+    data?.query_responses?.length > 0
+      ? data.query_responses.map((r: { id: string; query: string; llm_name: string; sentiment: string }, i: number) => ({
+          id: r.id || `qr-${i}`,
+          query: r.query,
+          llm_name: r.llm_name,
+          sentiment: r.sentiment as "positive" | "neutral" | "negative",
+        }))
+      : [];
 
   if (loading && !data) {
     return <LoadingSkeleton />;

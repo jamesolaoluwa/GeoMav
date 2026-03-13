@@ -69,16 +69,22 @@ export default function CompetitorsPage() {
           visibility_score: c.visibility_score,
           change: c.trend === "up" ? 1 : c.trend === "down" ? -1 : 0,
         }))
-      : mockCompetitors;
+      : [];
 
-  const llmBreakdown = mockLLMBreakdown;
+  const llmBreakdown =
+    data?.llm_breakdown?.length > 0
+      ? data.llm_breakdown
+      : [];
 
-  const sentimentChartData = mockSentimentByLLM.map((row) => ({
-    llm_name: row.llm_name,
-    positive: row.positive,
-    neutral: row.neutral,
-    negative: row.negative,
-  }));
+  const sentimentChartData =
+    data?.sentiment_by_llm?.length > 0
+      ? data.sentiment_by_llm.map((row: { llm_name: string; positive: number; neutral: number; negative: number }) => ({
+          llm_name: row.llm_name,
+          positive: row.positive,
+          neutral: row.neutral,
+          negative: row.negative,
+        }))
+      : [];
 
   if (loading && !data) {
     return <LoadingSkeleton />;
@@ -157,7 +163,7 @@ export default function CompetitorsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {llmBreakdown.map((row, idx) => (
+                {llmBreakdown.map((row: { llm_name: string; mention_rate: number; total_queries: number; avg_rank: number }, idx: number) => (
                   <tr
                     key={row.llm_name}
                     className={idx % 2 === 0 ? "bg-slate-50/50" : "bg-white"}

@@ -10,34 +10,21 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["dashboard"])
 
-MOCK_FALLBACK = {
-    "visibility_score": 78,
-    "visibility_change": 2.5,
-    "brand_ranking": 3,
-    "brand_ranking_total": 10,
-    "claim_accuracy": 92,
-    "claim_accuracy_change": 1.2,
-    "active_hallucinations": 2,
-    "visibility_trend": [
-        {"date": "2025-03-06", "score": 72},
-        {"date": "2025-03-07", "score": 74},
-        {"date": "2025-03-08", "score": 75},
-        {"date": "2025-03-09", "score": 76},
-        {"date": "2025-03-10", "score": 77},
-        {"date": "2025-03-11", "score": 78},
-    ],
-    "llm_breakdown": [
-        {"llm": "ChatGPT", "visibility": 85, "mentions": 120},
-        {"llm": "Claude", "visibility": 82, "mentions": 98},
-        {"llm": "Gemini", "visibility": 71, "mentions": 65},
-        {"llm": "Llama", "visibility": 68, "mentions": 45},
-    ],
-    "competitors": [
-        {"name": "Competitor A", "ranking": 1, "visibility": 92},
-        {"name": "Competitor B", "ranking": 2, "visibility": 84},
-        {"name": "GeoMav", "ranking": 3, "visibility": 78},
-    ],
-}
+def _build_fallback(business_name: str = "Your Business") -> dict:
+    return {
+        "visibility_score": 0,
+        "visibility_change": 0,
+        "brand_ranking": 1,
+        "brand_ranking_total": 1,
+        "claim_accuracy": 0,
+        "claim_accuracy_change": 0,
+        "active_hallucinations": 0,
+        "visibility_trend": [],
+        "llm_breakdown": [],
+        "competitors": [],
+        "business_name": business_name,
+        "status": "no_data",
+    }
 
 
 @router.get("/dashboard")
@@ -78,7 +65,7 @@ def get_dashboard(filter: Optional[str] = None):
             .execute()
         )
         competitors_list = [
-            {"name": c["name"], "ranking": i + 1, "visibility": c["visibility_score"]}
+            {"name": c["name"], "ranking": i + 1, "visibility": c["visibility_score"], "business_id": c.get("business_id")}
             for i, c in enumerate(competitors_res.data or [])
         ]
 
@@ -130,8 +117,9 @@ def get_dashboard(filter: Optional[str] = None):
 
         own_rank = None
         for i, c in enumerate(competitors_list):
-            if business_id and c.get("name"):
+            if business_id and c.get("business_id") == business_id:
                 own_rank = i + 1
+                break
         brand_ranking = own_rank or (len(competitors_list) + 1)
 
         return {
@@ -142,11 +130,11 @@ def get_dashboard(filter: Optional[str] = None):
             "claim_accuracy": claim_accuracy,
             "claim_accuracy_change": 0,
             "active_hallucinations": active_hallucinations,
-            "visibility_trend": visibility_trend or MOCK_FALLBACK["visibility_trend"],
-            "llm_breakdown": llm_breakdown or MOCK_FALLBACK["llm_breakdown"],
-            "competitors": competitors_list or MOCK_FALLBACK["competitors"],
+            "visibility_trend": visibility_trend,
+            "llm_breakdown": llm_breakdown,
+            "competitors": competitors_list,
         }
 
     except Exception as exc:
-        logger.warning("Dashboard Supabase query failed, using mock: %s", exc)
-        return MOCK_FALLBACK
+        logger.warning("Dashboard Supabase query failed: %s", exc)
+        return _build_fallback()

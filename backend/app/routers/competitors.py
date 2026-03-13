@@ -100,10 +100,67 @@ def get_competitors():
 
         market_leader = competitors[0]["name"] if competitors else "N/A"
 
+        resp_res = supabase.table("llm_responses").select("id, llm_name, query_id").execute()
+        responses = resp_res.data or []
+
+        llm_stats: dict[str, dict] = {}
+        for r in responses:
+            llm = r.get("llm_name", "Unknown")
+            if llm not in llm_stats:
+                llm_stats[llm] = {"total_queries": 0, "mentioned": 0, "rank_sum": 0, "rank_count": 0}
+            llm_stats[llm]["total_queries"] += 1
+
+        for m in mentions:
+            rid = m.get("response_id")
+            for r in responses:
+                if r["id"] == rid:
+                    llm = r.get("llm_name", "Unknown")
+                    if llm in llm_stats:
+                        llm_stats[llm]["mentioned"] += 1
+                        rank = m.get("rank")
+                        if rank and isinstance(rank, (int, float)):
+                            llm_stats[llm]["rank_sum"] += rank
+                            llm_stats[llm]["rank_count"] += 1
+                    break
+
+        llm_breakdown = []
+        for llm, stats in llm_stats.items():
+            tq = stats["total_queries"] or 1
+            llm_breakdown.append({
+                "llm_name": llm,
+                "mention_rate": round(stats["mentioned"] / tq * 100),
+                "total_queries": stats["total_queries"],
+                "avg_rank": round(stats["rank_sum"] / stats["rank_count"], 1) if stats["rank_count"] else 0,
+            })
+
+        llm_sentiments: dict[str, list[str]] = {}
+        for m in mentions:
+            rid = m.get("response_id")
+            for r in responses:
+                if r["id"] == rid:
+                    llm = r.get("llm_name", "Unknown")
+                    llm_sentiments.setdefault(llm, []).append(m.get("sentiment", "neutral"))
+                    break
+
+        sentiment_by_llm = []
+        for llm, sents in llm_sentiments.items():
+            total = len(sents) or 1
+            pos = sum(1 for s in sents if s == "positive")
+            neg = sum(1 for s in sents if s == "negative")
+            neu = total - pos - neg
+            sentiment_by_llm.append({
+                "llm_name": llm,
+                "positive": round(pos / total * 100),
+                "neutral": round(neu / total * 100),
+                "negative": round(neg / total * 100),
+            })
+
         return {
             "competitors": competitors,
             "market_leader": market_leader,
             "your_ranking": your_ranking or (len(competitors) + 1),
+            "llm_breakdown": llm_breakdown,
+            "sentiment_by_llm": sentiment_by_llm,
         }
 
     except Exception as exc:

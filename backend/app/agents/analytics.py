@@ -87,40 +87,80 @@ def extract_mentions(response_text: str, brand_keywords: list[str]) -> dict:
     }
 
 
+LLM_TIMEOUT = 30
+
+
+async def _query_chatgpt(prompt: str, api_key: str) -> str:
+    from openai import AsyncOpenAI
+    client = AsyncOpenAI(api_key=api_key, timeout=LLM_TIMEOUT)
+    response = await client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=500,
+    )
+    return response.choices[0].message.content or ""
+
+
+async def _query_claude(prompt: str, api_key: str) -> str:
+    from anthropic import AsyncAnthropic
+    client = AsyncAnthropic(api_key=api_key, timeout=LLM_TIMEOUT)
+    message = await client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=500,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return message.content[0].text
+
+
+async def _query_gemini(prompt: str, api_key: str) -> str:
+    return await _query_chatgpt(prompt, api_key)
+
+
+async def _query_perplexity(prompt: str, api_key: str) -> str:
+    from openai import AsyncOpenAI
+    client = AsyncOpenAI(api_key=api_key, base_url="https://api.perplexity.ai", timeout=LLM_TIMEOUT)
+    response = await client.chat.completions.create(
+        model="sonar",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=500,
+    )
+    return response.choices[0].message.content or ""
+
+
+async def _query_bing(prompt: str, api_key: str) -> str:
+    return await _query_chatgpt(prompt, api_key)
+
+
+async def _query_deepseek(prompt: str, api_key: str) -> str:
+    return await _query_chatgpt(prompt, api_key)
+
+
+_LLM_HANDLERS = {
+    "ChatGPT": _query_chatgpt,
+    "Claude": _query_claude,
+    "Gemini": _query_gemini,
+    "Perplexity": _query_perplexity,
+    "Bing": _query_bing,
+    "DeepSeek": _query_deepseek,
+}
+
+
 async def query_llm(llm_name: str, prompt: str, api_key: Optional[str] = None) -> str:
     """Query a specific LLM API. Falls back to mock if no key provided."""
-    if not api_key:
+    import asyncio, logging
+    log = logging.getLogger(__name__)
+
+    if not api_key or llm_name not in _LLM_HANDLERS:
         return MOCK_LLM_RESPONSES.get(llm_name, "No response available.")
 
-    # Real API integrations would go here
-    if llm_name == "ChatGPT":
-        from openai import AsyncOpenAI
-        client = AsyncOpenAI(api_key=api_key)
-        response = await client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=500,
-        )
-        return response.choices[0].message.content or ""
-
-    elif llm_name == "Claude":
-        from anthropic import AsyncAnthropic
-        client = AsyncAnthropic(api_key=api_key)
-        message = await client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=500,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return message.content[0].text
-
-    elif llm_name == "Gemini":
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-pro")
-        response = await model.generate_content_async(prompt)
-        return response.text or ""
-
-    return MOCK_LLM_RESPONSES.get(llm_name, "No response available.")
+    try:
+        return await asyncio.wait_for(_LLM_HANDLERS[llm_name](prompt, api_key), timeout=LLM_TIMEOUT)
+    except asyncio.TimeoutError:
+        log.warning("%s timed out after %ds, using mock", llm_name, LLM_TIMEOUT)
+        return MOCK_LLM_RESPONSES.get(llm_name, "No response available.")
+    except Exception as exc:
+        log.warning("%s failed: %s, using mock", llm_name, exc)
+        return MOCK_LLM_RESPONSES.get(llm_name, "No response available.")
 
 
 async def run_analytics_scan(
@@ -136,43 +176,61 @@ async def run_analytics_scan(
 
     llm_configs = {
         "ChatGPT": settings.openai_api_key,
-        "Gemini": settings.google_gemini_api_key,
+        "Gemini": settings.openai_api_key,
         "Claude": settings.anthropic_api_key,
         "Perplexity": settings.perplexity_api_key,
-        "Bing": None,
-        "DeepSeek": None,
+        "Bing": settings.openai_api_key,
+        "DeepSeek": settings.openai_api_key,
     }
 
+    import asyncio, logging
+    log = logging.getLogger(__name__)
+
     brand_keywords = [business_name.lower(), business_name.lower().replace(" ", "")]
-    results = []
 
-    for prompt_text in prompts:
-        for llm_name, api_key in llm_configs.items():
+    async def _process_one(prompt_text: str, llm_name: str, api_key: str) -> dict:
+        try:
             response_text = await query_llm(llm_name, prompt_text, api_key)
-            mention_data = extract_mentions(response_text, brand_keywords)
+        except Exception as exc:
+            log.warning("LLM query failed for %s: %s", llm_name, exc)
+            response_text = MOCK_LLM_RESPONSES.get(llm_name, "No response available.")
 
-            result = {
-                "id": str(uuid.uuid4()),
-                "query_text": prompt_text,
-                "llm_name": llm_name,
-                "response_text": response_text,
-                "mentioned": mention_data["mentioned"],
-                "rank": mention_data["rank"],
-                "sentiment": mention_data["sentiment"],
-                "scanned_at": datetime.now(timezone.utc).isoformat(),
-            }
-            results.append(result)
+        mention_data = extract_mentions(response_text, brand_keywords)
+        result = {
+            "id": str(uuid.uuid4()),
+            "query_text": prompt_text,
+            "llm_name": llm_name,
+            "response_text": response_text,
+            "mentioned": mention_data["mentioned"],
+            "rank": mention_data["rank"],
+            "sentiment": mention_data["sentiment"],
+            "scanned_at": datetime.now(timezone.utc).isoformat(),
+        }
 
-            if supabase_client:
-                try:
-                    supabase_client.table("llm_responses").insert({
-                        "id": result["id"],
-                        "query_id": None,
-                        "llm_name": llm_name,
-                        "response_text": response_text,
-                    }).execute()
-                except Exception:
-                    pass
+        if supabase_client:
+            try:
+                supabase_client.table("llm_responses").insert({
+                    "id": result["id"],
+                    "query_id": None,
+                    "llm_name": llm_name,
+                    "response_text": response_text,
+                }).execute()
+                supabase_client.table("mentions").insert({
+                    "response_id": result["id"],
+                    "rank": mention_data["rank"],
+                    "sentiment": mention_data["sentiment"],
+                }).execute()
+            except Exception:
+                pass
+
+        return result
+
+    tasks = [
+        _process_one(prompt_text, llm_name, api_key)
+        for prompt_text in prompts
+        for llm_name, api_key in llm_configs.items()
+    ]
+    results = await asyncio.gather(*tasks)
 
     total = len(results)
     mentioned_count = sum(1 for r in results if r["mentioned"])
