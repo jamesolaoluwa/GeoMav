@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { createClient } from "@/lib/supabase";
 
-const STEPS = ["Enter URL", "Review Profile", "AI Scan", "Results"];
+const STEPS = ["Enter URL", "Select Industry", "Build Truth Store", "Baseline Scan"];
 
 const LLM_LIST = ["ChatGPT", "Gemini", "Claude", "Perplexity", "Bing", "DeepSeek"];
 
@@ -59,6 +60,14 @@ export default function OnboardingPage() {
   const [scanning, setScanning] = useState(false);
   const [scanComplete, setScanComplete] = useState(false);
   const [scanResults, setScanResults] = useState<any>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user?.id) setUserId(data.user.id);
+    });
+  }, []);
 
   const [profile, setProfile] = useState({
     name: "",
@@ -107,7 +116,7 @@ export default function OnboardingPage() {
     setError(null);
 
     try {
-      const res: any = await api.saveOnboardProfile(profile);
+      const res: any = await api.saveOnboardProfile({ ...profile, ...(userId ? { user_id: userId } : {}) });
       setBusinessId(res.business_id);
       setScanResults((prev: any) => ({
         ...prev,
@@ -130,16 +139,19 @@ export default function OnboardingPage() {
       setScanResults((prev: any) => ({ ...prev, ...res }));
       const queryCount = res.queries_count || 10;
       const waitMs = Math.max(8000, queryCount * 3000);
-      setTimeout(() => {
+      setTimeout(async () => {
         setScanning(false);
         setScanComplete(true);
         setStep(3);
+        try { await api.advanceJourney(); } catch { /* best effort */ }
+        try { await api.advanceJourney(); } catch { /* advance past baseline audit */ }
       }, waitMs);
     } catch (e: any) {
       setScanning(false);
       setScanComplete(true);
       setStep(3);
       setScanResults((prev: any) => ({ ...prev, status: "completed_with_errors" }));
+      try { api.advanceJourney(); } catch { /* best effort */ }
     }
   };
 
@@ -170,10 +182,10 @@ export default function OnboardingPage() {
                   </svg>
                 </div>
                 <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl" style={{ fontFamily: "var(--font-display)" }}>
-                  Let&apos;s analyze your business
+                  Let&apos;s build your truth store
                 </h1>
                 <p className="mx-auto mt-3 max-w-md text-gray-500">
-                  Enter your website URL and we&apos;ll discover how AI assistants currently represent your business.
+                  Enter your website URL and we&apos;ll extract your business facts to create a verified truth store that AI assistants will be measured against.
                 </p>
               </div>
 
@@ -225,11 +237,16 @@ export default function OnboardingPage() {
             <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-gray-100 sm:p-12">
               <div className="mb-8">
                 <h1 className="text-2xl font-semibold text-gray-900" style={{ fontFamily: "var(--font-display)" }}>
-                  Review your business profile
+                  Build your product truth store
                 </h1>
                 <p className="mt-2 text-sm text-gray-500">
-                  We extracted this from your {source === "llms.txt" ? "/llms.txt file" : "website meta tags"}. Edit anything that needs fixing.
+                  We extracted this from your {source === "llms.txt" ? "/llms.txt file" : "website meta tags"}. Review and verify each field — this becomes the source of truth that GeoMav uses to validate AI claims about your business.
                 </p>
+                <div className="mt-3 rounded-lg bg-[#8B7CB5]/5 px-4 py-3">
+                  <p className="text-xs font-medium text-[#8B7CB5]">
+                    Your Truth Store powers accuracy scoring. The more complete and accurate your profile, the better GeoMav can detect hallucinations and measure your Truth Score.
+                  </p>
+                </div>
               </div>
 
               {error && (
@@ -334,7 +351,7 @@ export default function OnboardingPage() {
                   disabled={saving}
                   className="flex-1 rounded-xl bg-[#1a1225] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#2D2440] disabled:opacity-50"
                 >
-                  {saving ? "Saving..." : "Save & Run AI Scan"}
+                  {saving ? "Saving..." : "Save Truth Store & Run Baseline Scan"}
                 </button>
               </div>
             </div>
@@ -345,7 +362,7 @@ export default function OnboardingPage() {
             <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-gray-100 sm:p-12">
               <div className="text-center">
                 <h1 className="text-2xl font-semibold text-gray-900" style={{ fontFamily: "var(--font-display)" }}>
-                  Running your first AI scan
+                  Running your baseline audit
                 </h1>
                 <p className="mx-auto mt-3 max-w-md text-gray-500">
                   We&apos;re querying AI assistants to see how they represent <strong className="text-gray-900">{profile.name}</strong>.
@@ -407,10 +424,10 @@ export default function OnboardingPage() {
                   </svg>
                 </div>
                 <h1 className="text-2xl font-semibold text-gray-900" style={{ fontFamily: "var(--font-display)" }}>
-                  Your AI visibility scan is complete
+                  Baseline audit complete
                 </h1>
                 <p className="mx-auto mt-3 max-w-md text-gray-500">
-                  Here&apos;s a snapshot of how AI assistants currently represent <strong className="text-gray-900">{profile.name}</strong>.
+                  Your truth store is verified and your baseline visibility snapshot is ready. Here&apos;s how AI assistants currently represent <strong className="text-gray-900">{profile.name}</strong>.
                 </p>
               </div>
 
@@ -454,7 +471,10 @@ export default function OnboardingPage() {
               </div>
 
               <button
-                onClick={() => router.push("/dashboard")}
+                onClick={async () => {
+                  try { await api.advanceJourney(); } catch { /* best effort */ }
+                  router.push("/dashboard");
+                }}
                 className="mt-8 w-full rounded-xl bg-[#1a1225] px-6 py-3.5 text-sm font-medium text-white transition-colors hover:bg-[#2D2440]"
               >
                 Go to Dashboard

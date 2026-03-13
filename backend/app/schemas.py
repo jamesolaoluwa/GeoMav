@@ -54,3 +54,10 @@ class NotificationPreferencesUpdate(BaseModel):
     weekly_report: Optional[bool] = None
     opportunity_alerts: Optional[bool] = None
     email: Optional[str] = None
+
+
+class ApiKeysUpdate(BaseModel):
+    openai_api_key: Optional[str] = None
+    anthropic_api_key: Optional[str] = None
+    google_gemini_api_key: Optional[str] = None
+    perplexity_api_key: Optional[str] = None

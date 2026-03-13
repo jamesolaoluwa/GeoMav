@@ -66,6 +66,8 @@ export interface DashboardMetrics {
   claim_accuracy: number;
   claim_accuracy_change: number;
   active_hallucinations: number;
+  truth_score: number;
+  truth_score_change: number;
 }
 
 export interface VisibilityTrend {
@@ -150,3 +152,77 @@ export interface Prompt {
 }
 
 export type TimeFilter = "all_time" | "daily" | "weekly";
+
+export interface JourneyPhase {
+  phase: number;
+  name: string;
+  completed: boolean;
+  completed_at: string | null;
+}
+
+export interface JourneyData {
+  business_id: string;
+  current_phase: number;
+  phases: JourneyPhase[];
+}
+
+export interface AgentSettings {
+  monitored_llms: string[];
+  scan_frequency: string;
+  scan_hour: number;
+  auto_deploy_corrections: boolean;
+}
+
+export interface AgentMetrics {
+  agent_type: string;
+  total_runs: number;
+  completed: number;
+  failed: number;
+  success_rate: number;
+  total_items_processed: number;
+  total_llm_calls: number;
+  total_errors: number;
+  avg_duration_ms: number;
+  last_run: {
+    status: string;
+    started_at: string;
+    completed_at: string | null;
+    duration_ms: number | null;
+    items_processed: number;
+  } | null;
+}
+
+export interface EthicsFlag {
+  id: string;
+  flag_type: string;
+  severity: string;
+  title: string;
+  description: string;
+  source_agent: string | null;
+  status: string;
+  created_at: string;
+}
+
+export interface ClaimEvent {
+  id: string;
+  claim_id: string;
+  event_type: string;
+  description: string;
+  created_at: string;
+}
+
+export interface ROIDashboard {
+  truth_score: number;
+  visibility_trend: { date: string; visibility_score: number }[];
+  trust_trend: { date: string; trust_score: number; visibility_score: number; truth_score: number }[];
+  projected_growth: {
+    current: number;
+    projected_90d: number;
+    daily_rate: number;
+    trend: string;
+  } | null;
+  claims_resolved: number;
+  total_claims: number;
+  content_deployed: number;
+  resolution_rate: number;
+}

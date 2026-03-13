@@ -153,7 +153,12 @@ export default function OpportunitiesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-slate-900">Opportunities</h1>
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-900">Action Queue</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Prioritized actions to improve your AI visibility. Review, configure agents, and deploy fixes.
+        </p>
+      </div>
 
       {/* Summary stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -238,10 +243,35 @@ export default function OpportunitiesPage() {
             <p className="mt-1 text-sm text-slate-600">{opp.description}</p>
             <div className="mt-3 rounded-lg bg-slate-50 px-4 py-3">
               <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                Suggested fix
+                Recommended Action
               </p>
               <p className="mt-1 text-sm text-slate-700">{opp.suggested_fix}</p>
             </div>
+            {opp.status === "open" && (
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => updateStatus(opp.id, "in_progress")}
+                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+                >
+                  Start Action
+                </button>
+                {opp.category === "hallucination" && (
+                  <a
+                    href="/dashboard/content"
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Deploy Correction
+                  </a>
+                )}
+                <a
+                  href="/dashboard/agents"
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Configure Agents
+                </a>
+              </div>
+            )}
           </div>
         ))}
       </div>

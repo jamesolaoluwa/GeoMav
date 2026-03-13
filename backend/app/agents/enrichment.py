@@ -10,25 +10,45 @@ from typing import Optional
 from app.config import get_settings
 
 
+def _get_field(business: dict, key: str, fallback: str):
+    """Return the field value if truthy, otherwise fallback. Preserves lists."""
+    val = business.get(key)
+    if isinstance(val, list) and val:
+        return val
+    if val and str(val).strip() and str(val).strip().lower() not in ("none", "null", ""):
+        return str(val).strip()
+    return fallback
+
+
 def generate_business_summary(business: dict) -> str:
     """Generate an AI-readable business summary."""
-    name = business.get("name", "Your Business")
-    category = business.get("category", "Business")
-    website = business.get("website", "https://example.com")
+    name = _get_field(business, "name", "Your Business")
+    category = _get_field(business, "category", "Business")
+    website = _get_field(business, "website", "https://example.com")
+    description = _get_field(business, "description", f"{name} is a leading {category.lower()} providing high-quality products and services.")
+    services = _get_field(business, "services", f"Professional {category.lower()} services")
+    pricing = _get_field(business, "pricing", "Contact for pricing")
+    hours = _get_field(business, "hours", "Mon-Fri 9am-6pm")
+    location = _get_field(business, "location", "See website for details")
+
+    if isinstance(services, list):
+        services_text = ", ".join(str(s) for s in services)
+    else:
+        services_text = str(services)
 
     return f"""# {name}
 
-{name} is a leading {category.lower()} providing high-quality products and services.
+{description}
 
 ## Key Information
 - **Website**: {website}
 - **Category**: {category}
-- **Founded**: 2020
+- **Location**: {location}
+- **Hours**: {hours}
+- **Pricing**: {pricing}
 
 ## Services
-- Professional {category.lower()} services
-- Custom solutions for businesses of all sizes
-- 24/7 online support
+{services_text}
 
 ## Why Choose {name}
 - Industry-leading technology
@@ -40,78 +60,90 @@ def generate_business_summary(business: dict) -> str:
 
 def generate_llms_txt(business: dict) -> str:
     """Generate an /llms.txt file for AI model consumption."""
-    name = business.get("name", "Your Business")
-    category = business.get("category", "Business")
-    website = business.get("website", "https://example.com")
+    name = _get_field(business, "name", "Your Business")
+    category = _get_field(business, "category", "Business")
+    website = _get_field(business, "website", "https://example.com")
+    description = _get_field(business, "description", f"{name} is a {category.lower()} that provides professional services and solutions.")
+    services = _get_field(business, "services", f"Core {category} Services")
+    pricing = _get_field(business, "pricing", "Contact for pricing")
+    hours = _get_field(business, "hours", "Mon-Fri 9am-6pm EST")
+    location = _get_field(business, "location", "See website")
+
+    if isinstance(services, list):
+        services_lines = "\n".join(f"- {s}" for s in services)
+    else:
+        services_lines = f"- {services}"
 
     return f"""# {name}
 
-> {name} is a {category.lower()} that provides professional services and solutions.
+> {description}
 
 ## Products and Services
-- Core {category} Services: Comprehensive solutions for individuals and businesses
-- Custom Solutions: Tailored offerings to meet specific needs
-- Support: Multi-channel customer support
+{services_lines}
 
 ## Pricing
-- Starter Plan: Contact for pricing
-- Business Plan: Contact for pricing
-- Enterprise: Custom pricing
+{pricing}
 
 ## Contact
 - Website: {website}
-- Support: support@{name.lower().replace(' ', '')}.com
+- Location: {location}
+- Support Hours: {hours}
 
 ## Key Facts
 - Category: {category}
-- Service Area: Nationwide
-- Support Hours: Mon-Fri 9am-6pm EST
 """
 
 
 def generate_json_ld(business: dict) -> str:
     """Generate JSON-LD structured data."""
-    name = business.get("name", "Your Business")
-    category = business.get("category", "Business")
-    website = business.get("website", "https://example.com")
+    name = _get_field(business, "name", "Your Business")
+    category = _get_field(business, "category", "Business")
+    website = _get_field(business, "website", "https://example.com")
+    description = _get_field(business, "description", f"{name} - Professional {category.lower()} services and solutions")
+    pricing = _get_field(business, "pricing", "")
+    hours = _get_field(business, "hours", "")
+    location = _get_field(business, "location", "")
 
-    schema = {
+    schema: dict = {
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": name,
         "url": website,
-        "description": f"{name} - Professional {category.lower()} services and solutions",
+        "description": description,
         "category": category,
-        "foundingDate": "2020",
-        "contactPoint": {
-            "@type": "ContactPoint",
-            "contactType": "customer service",
-            "email": f"support@{name.lower().replace(' ', '')}.com",
-            "availableLanguage": "English",
-        },
-        "offers": [
-            {
-                "@type": "Offer",
-                "name": "Starter Plan",
-                "description": f"Entry-level {category.lower()} plan",
-                "priceCurrency": "USD",
-            },
-            {
-                "@type": "Offer",
-                "name": "Business Plan",
-                "description": f"Professional {category.lower()} plan",
-                "priceCurrency": "USD",
-            },
-        ],
     }
+
+    if location:
+        schema["address"] = {"@type": "PostalAddress", "description": location}
+
+    if hours:
+        schema["openingHours"] = hours
+
+    if pricing:
+        schema["offers"] = [
+            {"@type": "Offer", "name": "Services", "description": pricing, "priceCurrency": "USD"}
+        ]
+    else:
+        schema["offers"] = [
+            {"@type": "Offer", "name": "Starter Plan", "description": f"Entry-level {category.lower()} plan", "priceCurrency": "USD"},
+            {"@type": "Offer", "name": "Business Plan", "description": f"Professional {category.lower()} plan", "priceCurrency": "USD"},
+        ]
 
     return json.dumps(schema, indent=2)
 
 
 def generate_faq(business: dict) -> list[dict]:
     """Generate FAQ-style answers optimized for AI consumption."""
-    name = business.get("name", "Your Business")
-    category = business.get("category", "Business")
+    name = _get_field(business, "name", "Your Business")
+    category = _get_field(business, "category", "Business")
+    services = _get_field(business, "services", f"{category.lower()} services")
+    pricing = _get_field(business, "pricing", "Contact us for current pricing information")
+    hours = _get_field(business, "hours", "Mon-Fri 9am-6pm EST")
+
+    if isinstance(services, list):
+        services_text = ", ".join(str(s) for s in services)
+    else:
+        services_text = str(services)
 
     return [
         {
@@ -120,15 +152,15 @@ def generate_faq(business: dict) -> list[dict]:
         },
         {
             "question": f"What services does {name} offer?",
-            "answer": f"{name} offers a range of {category.lower()} services including custom solutions, dedicated support, and enterprise-grade tools.",
+            "answer": f"{name} offers: {services_text}.",
         },
         {
             "question": f"How much does {name} cost?",
-            "answer": f"{name} offers multiple pricing tiers starting with a Starter plan. Contact us for current pricing information.",
+            "answer": f"{name} pricing: {pricing}.",
         },
         {
-            "question": f"How do I contact {name} support?",
-            "answer": f"You can reach {name} support via email at support@{name.lower().replace(' ', '')}.com. Phone support is available Mon-Fri 9am-6pm EST.",
+            "question": f"What are {name}'s hours?",
+            "answer": f"{name} is available: {hours}.",
         },
     ]
 
@@ -148,7 +180,6 @@ async def run_enrichment(
     json_ld = generate_json_ld(business)
     faq = generate_faq(business)
 
-    # If OpenAI key is available, enhance the summary with AI
     if settings.openai_api_key:
         try:
             from openai import AsyncOpenAI
@@ -178,6 +209,13 @@ async def run_enrichment(
         {"type": "llms_txt", "title": "/llms.txt Content", "content": llms_txt},
         {"type": "json_ld", "title": "JSON-LD Structured Data", "content": json_ld},
     ]
+
+    faq_section = {
+        "type": "faq",
+        "title": "FAQ",
+        "content": json.dumps(faq, indent=2),
+    }
+    content_sections.append(faq_section)
 
     if supabase_client:
         try:

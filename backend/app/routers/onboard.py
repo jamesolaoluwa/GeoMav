@@ -475,6 +475,17 @@ async def save_profile(req: OnboardSaveRequest):
         if queries:
             supabase.table("queries").insert(queries).execute()
 
+        try:
+            from datetime import datetime, timezone
+            now = datetime.now(timezone.utc).isoformat()
+            supabase.table("business_journey").insert({
+                "business_id": business_id,
+                "current_phase": 2,
+                "phase1_completed_at": now,
+            }).execute()
+        except Exception:
+            pass
+
         return {
             "business_id": business_id,
             "business": business,
@@ -501,14 +512,17 @@ async def run_initial_scan(req: OnboardScanRequest, background_tasks: Background
             raise HTTPException(status_code=404, detail="Business not found")
         business = biz_result.data[0]
 
-        # Get queries for this business
-        queries_result = supabase.table("queries").select("text").eq("business_id", req.business_id).execute()
-        prompts = [q["text"] for q in (queries_result.data or [])]
+        queries_result = supabase.table("queries").select("id, text").eq("business_id", req.business_id).execute()
+        query_rows = queries_result.data or []
+        prompts = [q["text"] for q in query_rows]
+        query_ids = [q["id"] for q in query_rows]
 
         if not prompts:
             prompts = [f"best {business.get('category', 'business')} near me"]
+            query_ids = []
 
         scan_prompts = prompts[:10]
+        scan_query_ids = query_ids[:10] if len(query_ids) >= len(scan_prompts) else []
 
         from app.agents.analytics import run_analytics_scan
 
@@ -518,6 +532,8 @@ async def run_initial_scan(req: OnboardScanRequest, background_tasks: Background
                     prompts=scan_prompts,
                     business_name=business.get("name", ""),
                     supabase_client=supabase,
+                    query_ids=scan_query_ids,
+                    business_id=req.business_id,
                 )
                 logger.info(f"Initial scan complete: {result.get('visibility_score', 0)}% visibility")
             except Exception as e:

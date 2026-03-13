@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 
 from app.supabase_client import get_supabase
+from app.resolve_business import resolve_business
 
 logger = logging.getLogger(__name__)
 
@@ -76,8 +77,8 @@ def compare_periods(
         supabase = get_supabase()
 
         if not business_id:
-            biz = supabase.table("businesses").select("id").limit(1).execute()
-            business_id = biz.data[0]["id"] if biz.data else None
+            biz = resolve_business(supabase)
+            business_id = biz["id"] if biz else None
 
         if not business_id:
             return {
@@ -118,8 +119,8 @@ def get_snapshots(
         supabase = get_supabase()
 
         if not business_id:
-            biz = supabase.table("businesses").select("id").limit(1).execute()
-            business_id = biz.data[0]["id"] if biz.data else None
+            biz = resolve_business(supabase)
+            business_id = biz["id"] if biz else None
 
         if not business_id:
             return {"snapshots": []}
@@ -153,8 +154,8 @@ def create_snapshot(business_id: Optional[str] = None):
         supabase = get_supabase()
 
         if not business_id:
-            biz = supabase.table("businesses").select("id").limit(1).execute()
-            business_id = biz.data[0]["id"] if biz.data else None
+            biz = resolve_business(supabase)
+            business_id = biz["id"] if biz else None
 
         if not business_id:
             raise HTTPException(status_code=404, detail="No business found")

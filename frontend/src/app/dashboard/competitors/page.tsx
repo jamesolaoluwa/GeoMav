@@ -13,6 +13,7 @@ import {
   Cell,
 } from "recharts";
 import { api } from "@/lib/api";
+import { useUserId } from "@/lib/UserContext";
 import {
   mockCompetitors,
   mockLLMBreakdown,
@@ -52,22 +53,24 @@ function LoadingSkeleton() {
 export default function CompetitorsPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const userId = useUserId();
 
   useEffect(() => {
     setLoading(true);
     api
-      .getCompetitors()
+      .getCompetitors(userId)
       .then((res: any) => setData(res))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, []);
+  }, [userId]);
 
   const competitors =
     data?.competitors?.length > 0
-      ? data.competitors.map((c: { name: string; visibility_score: number; trend?: string }) => ({
+      ? data.competitors.map((c: { name: string; visibility_score: number; trend?: string; is_own?: boolean }) => ({
           name: c.name,
           visibility_score: c.visibility_score,
           change: c.trend === "up" ? 1 : c.trend === "down" ? -1 : 0,
+          is_own: c.is_own ?? false,
         }))
       : [];
 
@@ -124,10 +127,10 @@ export default function CompetitorsPage() {
                 formatter={(value) => [String(value), "Visibility Score"]}
               />
               <Bar dataKey="visibility_score" name="Visibility Score" radius={[0, 4, 4, 0]}>
-                {competitors.map((entry: { name: string; visibility_score: number; change: number }) => (
+                {competitors.map((entry: { name: string; visibility_score: number; change: number; is_own: boolean }) => (
                   <Cell
                     key={entry.name}
-                    fill={entry.name === "Your Brand" ? BRAND_COLOR : COMPETITOR_COLOR}
+                    fill={entry.is_own ? BRAND_COLOR : COMPETITOR_COLOR}
                   />
                 ))}
               </Bar>

@@ -157,6 +157,28 @@ Last updated: 2026-03-13 (session 4)
 - [ ] SEO meta tags on landing page
 - [ ] Performance optimization (lazy loading charts)
 
+### Phase Alignment (Multi-Phase Diagram)
+- [x] Phase-based journey tracking: `business_journey` table, `/api/journey` endpoint, PhaseStepper component in dashboard header
+- [x] Onboarding aligned to Phase 1: Enter URL → Select Industry → Build Truth Store → Baseline Scan
+- [x] Truth Store concept: Settings/Business Profile rebranded as "Truth Store" with explanation copy
+- [x] Truth Score metric: computed in `/api/dashboard` (% of resolved claims), shown on Overview as 5th metric card
+- [x] Action Queue: Opportunities page rebranded with "Start Action", "Deploy Correction", and "Configure Agents" buttons
+- [x] Agent Operations dashboard: `/dashboard/agents` page with per-agent metrics and Configure Agents (LLM toggles, scan frequency, auto-deploy)
+- [x] Agent settings: `agent_settings` table, `/api/agents/settings` GET/PUT endpoints
+- [x] Agent run tracking: `agent_runs` table, `/api/agents/metrics` endpoint
+- [x] Ethics Monitor: `/dashboard/ethics` page with flags list, severity badges, and status management
+- [x] Ethics flags: `ethics_flags` table, `/api/ethics` GET/PATCH endpoints
+- [x] Correction Timeline: `/dashboard/corrections` page with pipeline overview and per-claim vertical timeline
+- [x] Claim events: `claim_events` table, `/api/corrections/timeline/{id}` and `/api/corrections/overview` endpoints
+- [x] Growth & ROI dashboard: `/dashboard/roi` page with truth score, projected growth, trust trend chart, resolution rate
+- [x] Agent Performance Report: `/api/roi/agent-report` endpoint, per-agent attribution table in ROI page
+- [x] Agent performance reports: `agent_performance_reports` table
+- [x] Database migration: `004_phase_alignment.sql` with all new tables, indexes, and RLS policies
+- [x] 5 new backend routers: journey, agents, ethics, corrections, roi (registered in main.py)
+- [x] 4 new dashboard pages: agents, ethics, corrections, roi
+- [x] Sidebar updated: "Operations" group with Agent Operations, Ethics Monitor, Corrections, Growth & ROI
+- [x] Opportunities renamed to "Action Queue" in sidebar and page titles
+
 ## Known Issues
 - Recharts shows width/height warnings during static pre-rendering (harmless, charts render fine in browser)
 - Next.js middleware deprecation warning (middleware -> proxy convention)

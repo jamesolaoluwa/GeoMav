@@ -5,53 +5,71 @@ Falls back to mock responses if no API keys are configured.
 """
 
 import uuid
+import asyncio
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 
 from app.config import get_settings
 
-MOCK_LLM_RESPONSES = {
-    "ChatGPT": (
-        "Based on my analysis, the top website builders in 2026 are: "
-        "1. WordPress - Best for flexibility and plugins. "
-        "2. Wix - Best for beginners. "
-        "3. Your Brand - Best for modern design and AI features. "
-        "4. Squarespace - Best for portfolios. "
-        "5. Shopify - Best for e-commerce."
-    ),
-    "Gemini": (
-        "Here are the best website builders: "
-        "WordPress leads the pack with extensive customization. "
-        "Wix offers an intuitive drag-and-drop experience. "
-        "Your Brand provides excellent AI-powered tools and modern templates. "
-        "Squarespace is great for creative professionals."
-    ),
-    "Claude": (
-        "For website building in 2026, I'd recommend considering: "
-        "WordPress for maximum flexibility, Your Brand for its innovative "
-        "AI-assisted design tools, and Wix for ease of use. "
-        "Each has distinct strengths depending on your needs."
-    ),
-    "Perplexity": (
-        "According to recent reviews, the top website builders are "
-        "WordPress (54% market share), Wix, Your Brand, and Squarespace. "
-        "Your Brand has been noted for its AI page builder feature. "
-        "[Source: TechReview 2026, WebBuilderCompare.com]"
-    ),
-    "Bing": (
-        "Popular website builders include WordPress, Wix, Squarespace, "
-        "and Hostinger. These platforms offer various features for "
-        "different use cases from blogging to e-commerce."
-    ),
-    "DeepSeek": (
-        "Looking at the best website builders available, I would highlight "
-        "WordPress for its ecosystem, Wix for ease of use, Your Brand for "
-        "its AI-driven approach to web design, and Squarespace for visual "
-        "appeal. Each serves different user needs effectively."
-    ),
-}
+log = logging.getLogger(__name__)
 
-BRAND_KEYWORDS = ["your brand", "yourbrand", "your-brand"]
+def _build_mock_responses(brand: str = "Your Brand") -> dict[str, str]:
+    return {
+        "ChatGPT": (
+            f"Based on my analysis, the top options in 2026 are: "
+            f"1. {brand} - Known for quality and customer service. "
+            f"2. Several other providers in the area also offer competitive options. "
+            f"3. Overall, {brand} stands out for their attention to detail."
+        ),
+        "Gemini": (
+            f"Looking at the best options available: "
+            f"{brand} is a well-regarded choice with excellent reviews. "
+            f"They offer a wide range of services and have built a strong reputation "
+            f"in their local market."
+        ),
+        "Claude": (
+            f"For this category, I'd recommend considering: "
+            f"{brand} for their innovative approach and quality service. "
+            f"They have been noted for reliability and customer satisfaction. "
+            f"Other options exist but {brand} is frequently mentioned."
+        ),
+        "Perplexity": (
+            f"According to recent reviews and sources, {brand} is among the top "
+            f"choices in their category. They have received positive feedback "
+            f"for their services. {brand} has been highlighted for their "
+            f"excellent customer experience. [Source: Local Reviews 2026]"
+        ),
+        "Bing": (
+            f"Popular options in this category include several well-known providers. "
+            f"These businesses offer various features for different needs "
+            f"and budgets. Local options tend to provide more personalized service."
+        ),
+        "DeepSeek": (
+            f"Looking at the best options available, I would highlight "
+            f"{brand} for their quality and service, along with several "
+            f"other competitive options in the market. Each serves different "
+            f"customer needs effectively."
+        ),
+    }
+
+
+MOCK_LLM_RESPONSES = _build_mock_responses()
+
+BRAND_KEYWORDS = ["your brand", "yourbrand", "your-brand"]  # only used for mock fallback
+
+POSITIVE_WORDS = {
+    "best", "excellent", "great", "innovative", "top", "recommended",
+    "leading", "outstanding", "superior", "impressive", "reliable",
+    "popular", "trusted", "powerful", "premium", "exceptional",
+    "remarkable", "favorite", "preferred", "acclaimed",
+}
+NEGATIVE_WORDS = {
+    "poor", "lacking", "limited", "worst", "avoid", "terrible",
+    "bad", "disappointing", "unreliable", "overpriced", "slow",
+    "buggy", "outdated", "mediocre", "inferior", "frustrating",
+    "problematic", "confusing", "expensive", "complicated",
+}
 
 
 def extract_mentions(response_text: str, brand_keywords: list[str]) -> dict:
@@ -68,17 +86,14 @@ def extract_mentions(response_text: str, brand_keywords: list[str]) -> dict:
                 break
 
     sentiment = "neutral"
-    positive_words = ["best", "excellent", "great", "innovative", "top", "recommended"]
-    negative_words = ["poor", "lacking", "limited", "worst", "avoid"]
     if mentioned:
-        for word in positive_words:
-            if word in text_lower:
-                sentiment = "positive"
-                break
-        for word in negative_words:
-            if word in text_lower:
-                sentiment = "negative"
-                break
+        words = set(text_lower.split())
+        pos_hits = len(words & POSITIVE_WORDS)
+        neg_hits = len(words & NEGATIVE_WORDS)
+        if pos_hits > neg_hits:
+            sentiment = "positive"
+        elif neg_hits > pos_hits:
+            sentiment = "negative"
 
     return {
         "mentioned": mentioned,
@@ -113,7 +128,14 @@ async def _query_claude(prompt: str, api_key: str) -> str:
 
 
 async def _query_gemini(prompt: str, api_key: str) -> str:
-    return await _query_chatgpt(prompt, api_key)
+    import google.generativeai as genai
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = await asyncio.to_thread(
+        model.generate_content, prompt,
+        generation_config=genai.types.GenerationConfig(max_output_tokens=500),
+    )
+    return response.text or ""
 
 
 async def _query_perplexity(prompt: str, api_key: str) -> str:
@@ -128,11 +150,29 @@ async def _query_perplexity(prompt: str, api_key: str) -> str:
 
 
 async def _query_bing(prompt: str, api_key: str) -> str:
-    return await _query_chatgpt(prompt, api_key)
+    from openai import AsyncOpenAI
+    client = AsyncOpenAI(api_key=api_key, timeout=LLM_TIMEOUT)
+    response = await client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=500,
+    )
+    return response.choices[0].message.content or ""
 
 
 async def _query_deepseek(prompt: str, api_key: str) -> str:
-    return await _query_chatgpt(prompt, api_key)
+    from openai import AsyncOpenAI
+    client = AsyncOpenAI(
+        api_key=api_key,
+        base_url="https://api.deepseek.com",
+        timeout=LLM_TIMEOUT,
+    )
+    response = await client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=500,
+    )
+    return response.choices[0].message.content or ""
 
 
 _LLM_HANDLERS = {
@@ -145,85 +185,100 @@ _LLM_HANDLERS = {
 }
 
 
-async def query_llm(llm_name: str, prompt: str, api_key: Optional[str] = None) -> str:
+async def query_llm(
+    llm_name: str,
+    prompt: str,
+    api_key: Optional[str] = None,
+    business_name: str = "Your Brand",
+) -> str:
     """Query a specific LLM API. Falls back to mock if no key provided."""
-    import asyncio, logging
-    log = logging.getLogger(__name__)
-
+    mock = _build_mock_responses(business_name)
     if not api_key or llm_name not in _LLM_HANDLERS:
-        return MOCK_LLM_RESPONSES.get(llm_name, "No response available.")
+        return mock.get(llm_name, "No response available.")
 
     try:
         return await asyncio.wait_for(_LLM_HANDLERS[llm_name](prompt, api_key), timeout=LLM_TIMEOUT)
     except asyncio.TimeoutError:
         log.warning("%s timed out after %ds, using mock", llm_name, LLM_TIMEOUT)
-        return MOCK_LLM_RESPONSES.get(llm_name, "No response available.")
+        return mock.get(llm_name, "No response available.")
     except Exception as exc:
         log.warning("%s failed: %s, using mock", llm_name, exc)
-        return MOCK_LLM_RESPONSES.get(llm_name, "No response available.")
+        return mock.get(llm_name, "No response available.")
+
+
+VALID_SENTIMENTS = {"positive", "neutral", "negative"}
 
 
 async def run_analytics_scan(
     prompts: list[str],
     business_name: str = "Your Brand",
     supabase_client=None,
+    query_ids: Optional[list[str]] = None,
+    business_id: Optional[str] = None,
 ) -> dict:
     """
     Run a full analytics scan: query all LLMs with all prompts,
     extract mentions, and return results.
+
+    Args:
+        query_ids: parallel list of query UUIDs matching prompts, used to link llm_responses.
+        business_id: UUID of the business; required for writing mentions.
     """
     settings = get_settings()
 
     llm_configs = {
         "ChatGPT": settings.openai_api_key,
-        "Gemini": settings.openai_api_key,
+        "Gemini": settings.google_gemini_api_key,
         "Claude": settings.anthropic_api_key,
         "Perplexity": settings.perplexity_api_key,
         "Bing": settings.openai_api_key,
-        "DeepSeek": settings.openai_api_key,
+        "DeepSeek": "",
     }
 
-    import asyncio, logging
-    log = logging.getLogger(__name__)
+    prompt_id_map = {}
+    if query_ids and len(query_ids) == len(prompts):
+        prompt_id_map = dict(zip(prompts, query_ids))
 
-    brand_keywords = [business_name.lower(), business_name.lower().replace(" ", "")]
+    name_lower = business_name.lower()
+    brand_keywords = [
+        name_lower,
+        name_lower.replace(" ", ""),
+        name_lower.replace("&", "and"),
+        name_lower.replace(" & ", " and "),
+    ]
+    for part in name_lower.split():
+        if len(part) > 3 and part not in {"and", "the", "for"}:
+            brand_keywords.append(part)
+    brand_keywords = list(dict.fromkeys(brand_keywords))
 
     async def _process_one(prompt_text: str, llm_name: str, api_key: str) -> dict:
+        enriched_prompt = (
+            f"Answer the following question with specific, factual information. "
+            f"Include brand names, rankings, pricing, locations, and services where relevant. "
+            f"Be concrete and avoid vague advice.\n\n{prompt_text}"
+        )
         try:
-            response_text = await query_llm(llm_name, prompt_text, api_key)
+            response_text = await query_llm(llm_name, enriched_prompt, api_key, business_name)
         except Exception as exc:
             log.warning("LLM query failed for %s: %s", llm_name, exc)
-            response_text = MOCK_LLM_RESPONSES.get(llm_name, "No response available.")
+            response_text = _build_mock_responses(business_name).get(llm_name, "No response available.")
 
         mention_data = extract_mentions(response_text, brand_keywords)
-        result = {
+        sentiment = mention_data["sentiment"]
+        if sentiment not in VALID_SENTIMENTS:
+            sentiment = None
+
+        return {
             "id": str(uuid.uuid4()),
+            "query_id": prompt_id_map.get(prompt_text),
             "query_text": prompt_text,
             "llm_name": llm_name,
             "response_text": response_text,
             "mentioned": mention_data["mentioned"],
             "rank": mention_data["rank"],
-            "sentiment": mention_data["sentiment"],
+            "sentiment": sentiment,
             "scanned_at": datetime.now(timezone.utc).isoformat(),
         }
-
-        if supabase_client:
-            try:
-                supabase_client.table("llm_responses").insert({
-                    "id": result["id"],
-                    "query_id": None,
-                    "llm_name": llm_name,
-                    "response_text": response_text,
-                }).execute()
-                supabase_client.table("mentions").insert({
-                    "response_id": result["id"],
-                    "rank": mention_data["rank"],
-                    "sentiment": mention_data["sentiment"],
-                }).execute()
-            except Exception:
-                pass
-
-        return result
 
     tasks = [
         _process_one(prompt_text, llm_name, api_key)
@@ -231,6 +286,35 @@ async def run_analytics_scan(
         for llm_name, api_key in llm_configs.items()
     ]
     results = await asyncio.gather(*tasks)
+
+    if supabase_client:
+        try:
+            llm_rows = [
+                {"id": r["id"], "query_id": r["query_id"], "llm_name": r["llm_name"], "response_text": r["response_text"]}
+                for r in results
+            ]
+            supabase_client.table("llm_responses").insert(llm_rows).execute()
+        except Exception as exc:
+            log.warning("llm_responses insert failed: %s", exc)
+
+        if business_id:
+            try:
+                mention_rows = [
+                    {
+                        "business_id": business_id,
+                        "response_id": r["id"],
+                        "rank": r["rank"],
+                        "sentiment": r["sentiment"],
+                    }
+                    for r in results
+                    if r["sentiment"] in VALID_SENTIMENTS
+                ]
+                if mention_rows:
+                    supabase_client.table("mentions").insert(mention_rows).execute()
+            except Exception as exc:
+                log.warning("mentions insert failed: %s", exc)
+        else:
+            log.warning("No business_id supplied — skipping mentions insert")
 
     total = len(results)
     mentioned_count = sum(1 for r in results if r["mentioned"])
@@ -240,5 +324,5 @@ async def run_analytics_scan(
         "total_queries": total,
         "mentions": mentioned_count,
         "visibility_score": round(visibility_score, 1),
-        "results": results,
+        "results": list(results),
     }

@@ -21,6 +21,12 @@ from app.routers import (
     notifications,
     export,
     history,
+    journey,
+    agents,
+    ethics,
+    corrections,
+    roi,
+    estimator,
 )
 
 logger = logging.getLogger(__name__)
@@ -82,6 +88,12 @@ app.include_router(user.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
 app.include_router(export.router, prefix="/api")
 app.include_router(history.router, prefix="/api")
+app.include_router(journey.router, prefix="/api")
+app.include_router(agents.router, prefix="/api")
+app.include_router(ethics.router, prefix="/api")
+app.include_router(corrections.router, prefix="/api")
+app.include_router(roi.router, prefix="/api")
+app.include_router(estimator.router, prefix="/api")
 
 
 @app.get("/health")

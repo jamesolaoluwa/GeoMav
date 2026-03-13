@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { api } from "@/lib/api";
+import { useUserId } from "@/lib/UserContext";
 import {
   mockDashboardMetrics,
   mockVisibilityTrend,
@@ -145,26 +146,41 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
 
+  const [estimated, setEstimated] = useState(false);
+  const userId = useUserId();
+
   useEffect(() => {
     setLoading(true);
+    setEstimated(false);
     api
-      .getDashboard(timeFilter)
-      .then((res: any) => {
+      .getDashboard(timeFilter, userId)
+      .then(async (res: any) => {
+        const noData =
+          res?.status === "no_data" ||
+          (!res?.competitors?.length && !res?.visibility_trend?.length && (res?.truth_score ?? 0) === 0);
+        if (noData) {
+          try {
+            const est: any = await api.getEstimate(userId);
+            setData({ ...res, ...est });
+            setEstimated(true);
+            return;
+          } catch { /* fall through */ }
+        }
         setData(res);
       })
       .catch(() => {
         setData(null);
       })
       .finally(() => setLoading(false));
-  }, [timeFilter]);
+  }, [timeFilter, userId]);
 
   const handleRunScan = async () => {
     setScanning(true);
     try {
-      await api.runScan();
+      await api.runScan(userId);
       alert("Scan started successfully. Data will refresh shortly.");
       setLoading(true);
-      const res = await api.getDashboard(timeFilter);
+      const res = await api.getDashboard(timeFilter, userId);
       setData(res);
     } catch {
       alert("Failed to start scan. Please try again.");
@@ -183,6 +199,8 @@ export default function DashboardPage() {
         claim_accuracy: data.claim_accuracy ?? 0,
         claim_accuracy_change: data.claim_accuracy_change ?? 0,
         active_hallucinations: data.active_hallucinations ?? 0,
+        truth_score: data.truth_score ?? 0,
+        truth_score_change: data.truth_score_change ?? 0,
       }
     : mockDashboardMetrics;
 
@@ -192,18 +210,19 @@ export default function DashboardPage() {
 
   const llmBreakdown: LLMBreakdown[] = data?.llm_breakdown?.length
     ? data.llm_breakdown.map((r: any) => ({
-        llm_name: r.llm ?? r.llm_name ?? "Unknown",
-        mention_rate: r.visibility ?? r.mention_rate ?? 0,
-        total_queries: r.mentions ?? r.total_queries ?? 0,
-        avg_rank: r.avg_rank ?? 5,
+        llm_name: r.llm_name ?? "Unknown",
+        mention_rate: r.mention_rate ?? 0,
+        total_queries: r.total_queries ?? 0,
+        avg_rank: r.avg_rank ?? 0,
       }))
     : [];
 
-  const competitors: CompetitorVisibility[] = data?.competitors?.length
+  const competitors: (CompetitorVisibility & { is_own?: boolean })[] = data?.competitors?.length
     ? data.competitors.map((c: any) => ({
         name: c.name ?? "Unknown",
-        visibility_score: c.visibility ?? c.visibility_score ?? 0,
+        visibility_score: c.visibility_score ?? 0,
         change: c.change ?? 0,
+        is_own: c.is_own ?? false,
       }))
     : [];
 
@@ -248,8 +267,15 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Estimated banner */}
+      {estimated && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+          These metrics are <strong>estimated</strong> based on your business profile. Run a scan to get real data.
+        </div>
+      )}
+
       {/* Metric cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
           <p className="text-sm font-medium text-slate-500">
             AI Visibility Score
@@ -259,6 +285,15 @@ export default function DashboardPage() {
               {metrics.visibility_score}
             </span>
             <ChangeIndicator value={metrics.visibility_change} suffix=" pts" />
+          </div>
+        </div>
+        <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+          <p className="text-sm font-medium text-slate-500">Truth Score</p>
+          <div className="mt-1 flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-slate-900">
+              {metrics.truth_score}%
+            </span>
+            <ChangeIndicator value={metrics.truth_score_change} />
           </div>
         </div>
         <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
@@ -415,7 +450,7 @@ export default function DashboardPage() {
                   <tr
                     key={row.name}
                     className={`hover:bg-slate-50/50 ${
-                      row.name === "Your Brand" ? "bg-blue-50/50" : ""
+                      row.is_own ? "bg-blue-50/50" : ""
                     }`}
                   >
                     <td className="whitespace-nowrap px-5 py-3 text-sm font-medium text-slate-900">
