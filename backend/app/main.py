@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import get_settings
+
 from app.routers import (
     dashboard,
     visibility,
@@ -64,9 +66,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="GeoMav API", version="0.1.0", lifespan=lifespan)
 
+_origins = [o.strip() for o in get_settings().allowed_origins.split(",") if o.strip()]
+if not _origins:
+    _origins = ["http://localhost:3000"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

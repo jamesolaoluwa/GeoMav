@@ -119,16 +119,19 @@ Open http://localhost:3000, sign in, and use the dashboard. Click **Run Scan** t
 
 ## Deployment
 
-*Add your deployment URL here when deployed (e.g. Vercel, Netlify).*
+**Frontend:** Vercel | **Backend:** Railway or Render
+
+See **[DEPLOY.md](DEPLOY.md)** for step-by-step instructions. After deploying, add your live URL here.
 
 ---
 
-## Key Docs
+## Meet the Team
 
-- **AGENTS.md** — Repository guidelines, commands, coding style
-- **claudecontext/01-product.md** — Product overview, pricing, features
-- **claudecontext/02-architecture.md** — Tech stack, data flow, API
-- **claudecontext/05-getting-actual-data.md** — How to run seed + scan for real data
+- Otito Udedibor
+- Olaoluwa James-Owolabi
+- Dijon Miller
+- Mikea Fernander
+- Reanna Knowles
 
 ---
 

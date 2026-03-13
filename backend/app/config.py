@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     next_public_supabase_url: str = ""
     next_public_supabase_anon_key: str = ""
 
+    allowed_origins: str = "http://localhost:3000"
+
     openai_api_key: str = ""
     anthropic_api_key: str = ""
     google_gemini_api_key: str = ""
