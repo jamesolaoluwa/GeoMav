@@ -12,6 +12,7 @@ import type {
   Opportunity,
   ContentSection,
   Prompt,
+  UserProfile,
 } from "@/lib/types";
 
 export const mockDashboardMetrics: DashboardMetrics = {
@@ -319,3 +320,18 @@ export const mockPrompts: Prompt[] = [
   { id: "p7", text: "Best website builder for portfolios", category: "Design", created_at: "2026-03-02T00:00:00Z" },
   { id: "p8", text: "Website builder for restaurants", category: "Industry", created_at: "2026-03-03T00:00:00Z" },
 ];
+
+export const mockBusinessProfile = {
+  name: "Your Brand",
+  website: "https://yourbrand.com",
+  category: "Website Builder",
+  description:
+    "Your Brand is a modern website builder and hosting platform designed for small businesses, freelancers, and creative professionals.",
+};
+
+export const mockUser: UserProfile = {
+  id: "demo-user-001",
+  email: "demo@geomav.com",
+  display_name: "Demo User",
+  created_at: "2024-01-01T00:00:00Z",
+};

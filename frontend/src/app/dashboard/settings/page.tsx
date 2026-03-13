@@ -5,14 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase";
 import { useUser } from "@/lib/useUser";
-
-const DEFAULT_PROFILE = {
-  name: "Your Brand",
-  website: "https://yourbrand.com",
-  category: "Website Builder",
-  description:
-    "Your Brand is a modern website builder and hosting platform designed for small businesses, freelancers, and creative professionals.",
-};
+import { mockBusinessProfile } from "@/data/mock";
 
 const CATEGORIES = [
   "Website Builder",
@@ -53,7 +46,7 @@ function getInitials(displayName: string | undefined, email: string | undefined)
 export default function SettingsPage() {
   const router = useRouter();
   const { user, isDummyUser } = useUser();
-  const [profile, setProfile] = useState(DEFAULT_PROFILE);
+  const [profile, setProfile] = useState(mockBusinessProfile);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const userDisplayName =
@@ -85,18 +78,19 @@ export default function SettingsPage() {
     setLoading(true);
     api
       .getBusiness()
-      .then((data: { name?: string; website?: string; category?: string; description?: string }) => {
+      .then((data) => {
+        const biz = data as { name?: string; website?: string; category?: string; description?: string };
         if (cancelled) return;
         setProfile({
-          name: String(data?.name ?? DEFAULT_PROFILE.name),
-          website: String(data?.website ?? DEFAULT_PROFILE.website),
-          category: String(data?.category ?? DEFAULT_PROFILE.category),
-          description: String(data?.description ?? DEFAULT_PROFILE.description),
+          name: String(biz?.name ?? mockBusinessProfile.name),
+          website: String(biz?.website ?? mockBusinessProfile.website),
+          category: String(biz?.category ?? mockBusinessProfile.category),
+          description: String(biz?.description ?? mockBusinessProfile.description),
         });
       })
       .catch(() => {
         if (cancelled) return;
-        setProfile(DEFAULT_PROFILE);
+        setProfile(mockBusinessProfile);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

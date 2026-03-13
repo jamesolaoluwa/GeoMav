@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
+import { mockUser } from "@/data/mock";
 import type { User } from "@supabase/supabase-js";
 
 const DUMMY_USER: User = {
-  id: "demo-user-001",
-  email: "demo@geomav.com",
-  user_metadata: { display_name: "Demo User" },
+  id: mockUser.id,
+  email: mockUser.email,
+  user_metadata: { display_name: mockUser.display_name },
   app_metadata: {},
   aud: "authenticated",
-  created_at: new Date().toISOString(),
+  created_at: mockUser.created_at,
 } as User;
 
 export function useUser() {
