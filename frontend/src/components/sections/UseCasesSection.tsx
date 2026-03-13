@@ -23,7 +23,7 @@ const useCases = [
     title: "E-commerce",
     description:
       "Track how AI assistants recommend your products compared to competitors. Identify missing mentions and optimize your product descriptions for AI discovery.",
-    backgroundImage: "/images/E-Shopping2.png",
+    backgroundImage: "/images/E-CommerceMain.png",
   },
   {
     id: "agencies",

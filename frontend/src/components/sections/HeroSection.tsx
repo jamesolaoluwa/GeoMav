@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import CTAButton from "@/components/ui/CTAButton";
+import { SparklesText } from "@/components/ui/sparkles-text";
 import { TextLoop } from "@/components/ui/text-loop";
 import { fadeUp, scaleSettle, staggerContainer } from "@/lib/motion";
 
@@ -119,27 +120,37 @@ export default function HeroSection() {
 
         <motion.div variants={fadeUp} className="mt-3 flex justify-center md:mt-4">
           <TextLoop interval={1.8} playOnce className="text-heading">
-            {heroLoopPlatforms.map((platform) => (
-              <span
-                key={platform.id}
-                className="flex items-center justify-center gap-2.5 whitespace-nowrap text-[2.4rem] leading-[1] tracking-[-0.02em] md:gap-3 md:text-[3.3rem] lg:text-[4.2rem]"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {platform.image ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={platform.image}
-                      alt={platform.label}
-                      className={`${platform.logoClassName} object-contain md:h-8 lg:h-10`}
-                    />
-                  </>
-                ) : (
+            {heroLoopPlatforms.map((platform) =>
+              platform.id === "every-tool-final" ? (
+                <span
+                  key={platform.id}
+                  className="flex items-center justify-center gap-2.5 whitespace-nowrap"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   <span className="inline-block w-7 md:w-8 lg:w-10" aria-hidden="true" />
-                )}
-                <span>{platform.label}</span>
-              </span>
-            ))}
+                  <SparklesText
+                    text="every tool"
+                    className="text-[2.4rem] font-normal leading-[1] tracking-[-0.02em] text-heading md:text-[3.3rem] lg:text-[4.2rem]"
+                    colors={{ first: "#8B7CB5", second: "#B8A9D4" }}
+                    sparklesCount={8}
+                  />
+                </span>
+              ) : (
+                <span
+                  key={platform.id}
+                  className="flex items-center justify-center gap-2.5 whitespace-nowrap text-[2.4rem] leading-[1] tracking-[-0.02em] md:gap-3 md:text-[3.3rem] lg:text-[4.2rem]"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={platform.image}
+                    alt={platform.label}
+                    className={`${platform.logoClassName} object-contain md:h-8 lg:h-10`}
+                  />
+                  <span>{platform.label}</span>
+                </span>
+              ),
+            )}
           </TextLoop>
         </motion.div>
 
