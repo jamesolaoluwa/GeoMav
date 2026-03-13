@@ -84,7 +84,7 @@ export default function AgentsPage() {
     if (!settings) return;
     setSaving(true);
     try {
-      await api.updateAgentSettings(settings);
+  await api.updateAgentSettings(settings as unknown as Record<string, unknown>);
     } catch {
       /* ignore */
     } finally {
