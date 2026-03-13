@@ -68,10 +68,10 @@ export default function HeroSection() {
       >
         <motion.h1
           variants={fadeUp}
-          className="max-w-[640px] text-[2.5rem] leading-[1.0] tracking-[-0.02em] text-heading md:text-[3.5rem] lg:text-[4.5rem]"
+          className="max-w-[640px] text-[2.5rem] leading-[1.0] tracking-[-0.02em] text-heading md:text-[3.5rem] lg:max-w-[900px] lg:whitespace-nowrap lg:text-[4.5rem]"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Own Your AI Visibility
+          Own Your AI Visibility in
         </motion.h1>
 
         <motion.p
