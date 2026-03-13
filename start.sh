@@ -2,7 +2,7 @@
 cd "$(cd "$(dirname "$0")" && pwd)"
 echo "Starting GeoMav (backend + frontend)..."
 echo ""
-concurrently \
+npx concurrently \
   --names "API,WEB" \
   --prefix-colors "cyan,magenta" \
   --kill-others-on-fail \
