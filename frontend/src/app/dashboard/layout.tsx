@@ -304,6 +304,7 @@ export default function DashboardLayout({
           </nav>
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           <div className="border-t border-white/10 p-4">
             <div className="mb-3 flex items-center gap-3">
               <div
@@ -319,6 +320,9 @@ export default function DashboardLayout({
                 <p className="truncate text-xs text-gray-500">{user?.email ?? ""}</p>
               </div>
             </div>
+=======
+          <div className={`border-t border-white/10 ${collapsed ? "px-2 py-4" : "p-4"}`}>
+>>>>>>> Stashed changes
 =======
           <div className={`border-t border-white/10 ${collapsed ? "px-2 py-4" : "p-4"}`}>
 >>>>>>> Stashed changes
