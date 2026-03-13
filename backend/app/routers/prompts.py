@@ -1,9 +1,11 @@
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 
 from app.schemas import PromptCreate
 from app.supabase_client import get_supabase
+from app.resolve_business import resolve_business
 
 logger = logging.getLogger(__name__)
 
@@ -17,11 +19,11 @@ MOCK_FALLBACK_PROMPTS = [
 
 
 @router.get("/prompts")
-def list_prompts():
+def list_prompts(user_id: Optional[str] = None):
     try:
         supabase = get_supabase()
-        biz = supabase.table("businesses").select("id").limit(1).execute()
-        business_id = biz.data[0]["id"] if biz.data else None
+        biz = resolve_business(supabase, user_id)
+        business_id = biz["id"] if biz else None
 
         query = supabase.table("queries").select("*").order("created_at", desc=True)
         if business_id:
@@ -40,11 +42,11 @@ def list_prompts():
 
 
 @router.post("/prompts")
-def create_prompt(prompt: PromptCreate):
+def create_prompt(prompt: PromptCreate, user_id: Optional[str] = None):
     try:
         supabase = get_supabase()
-        biz = supabase.table("businesses").select("id").limit(1).execute()
-        business_id = biz.data[0]["id"] if biz.data else None
+        biz = resolve_business(supabase, user_id)
+        business_id = biz["id"] if biz else None
 
         row = {"text": prompt.text, "category": prompt.category}
         if business_id:

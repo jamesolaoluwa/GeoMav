@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { useUser } from "@/lib/useUser";
+import { UserContext } from "@/lib/UserContext";
+import PhaseStepper from "@/components/ui/PhaseStepper";
 
 const SIDEBAR_NAV = [
   {
@@ -32,11 +34,20 @@ const SIDEBAR_NAV = [
     items: [
       {
         href: "/dashboard/opportunities",
-        label: "Opportunities",
+        label: "Action Queue",
         icon: LightbulbIcon,
       },
       { href: "/dashboard/content", label: "Content", icon: FileTextIcon },
       { href: "/dashboard/competitors", label: "Competitors", icon: UsersIcon },
+    ],
+  },
+  {
+    group: "Operations",
+    items: [
+      { href: "/dashboard/agents", label: "Agent Operations", icon: ActivityIcon },
+      { href: "/dashboard/ethics", label: "Ethics Monitor", icon: ShieldIcon },
+      { href: "/dashboard/corrections", label: "Corrections", icon: GitBranchIcon },
+      { href: "/dashboard/roi", label: "Growth & ROI", icon: TrendingUpIcon },
     ],
   },
   {
@@ -71,9 +82,13 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/hallucinations": "Hallucinations",
   "/dashboard/prompts": "Prompts",
   "/dashboard/shopping": "Shopping",
-  "/dashboard/opportunities": "Opportunities",
+  "/dashboard/opportunities": "Action Queue",
   "/dashboard/content": "Content",
   "/dashboard/competitors": "Competitors",
+  "/dashboard/agents": "Agent Operations",
+  "/dashboard/ethics": "Ethics Monitor",
+  "/dashboard/corrections": "Correction Timeline",
+  "/dashboard/roi": "Growth & ROI",
   "/dashboard/settings": "Settings",
 };
 
@@ -256,6 +271,42 @@ function UsersIcon({ className }: { className?: string }) {
   );
 }
 
+function ActivityIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    </svg>
+  );
+}
+
+function ShieldIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
+function GitBranchIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="6" y1="3" x2="6" y2="15" />
+      <circle cx="18" cy="6" r="3" />
+      <circle cx="6" cy="18" r="3" />
+      <path d="M18 9a9 9 0 0 1-9 9" />
+    </svg>
+  );
+}
+
+function TrendingUpIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+      <polyline points="17 6 23 6 23 12" />
+    </svg>
+  );
+}
+
 function SettingsIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -330,6 +381,7 @@ export default function DashboardLayout({
 
   const handleLogout = async () => {
     setLoggingOut(true);
+    document.cookie = "geomav_onboarded=; path=/; max-age=0";
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/signin");
@@ -503,6 +555,10 @@ export default function DashboardLayout({
             {pageTitle}
           </h1>
 
+          <div className="hidden lg:block">
+            <PhaseStepper />
+          </div>
+
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -532,7 +588,11 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 lg:p-8">{children}</main>
+        <main className="flex-1 p-4 lg:p-8">
+          <UserContext.Provider value={{ userId: user?.id ?? null }}>
+            {children}
+          </UserContext.Provider>
+        </main>
       </div>
     </div>
   );

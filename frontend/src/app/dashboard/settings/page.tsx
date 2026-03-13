@@ -49,6 +49,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState({ name: "", website: "", category: "", description: "" });
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [enrichStatus, setEnrichStatus] = useState<"idle" | "enriching" | "done" | "error">("idle");
   const userDisplayName =
     user
       ? ((user.user_metadata as Record<string, string> | undefined)?.display_name ||
@@ -67,6 +68,8 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false);
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
+  const [apiKeySaveStatus, setApiKeySaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [lastEnriched, setLastEnriched] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<Record<string, boolean>>({
     hallucinations: true,
     weekly_report: true,
@@ -96,9 +99,9 @@ export default function SettingsPage() {
     let cancelled = false;
     setLoading(true);
     api
-      .getBusiness()
+      .getBusiness(user?.id)
       .then((data) => {
-        const biz = data as { name?: string; website?: string; category?: string; description?: string };
+        const biz = data as { name?: string; website?: string; category?: string; description?: string; updated_at?: string };
         if (cancelled) return;
         setProfile({
           name: String(biz?.name ?? ""),
@@ -106,6 +109,7 @@ export default function SettingsPage() {
           category: String(biz?.category ?? ""),
           description: String(biz?.description ?? ""),
         });
+        if (biz?.updated_at) setLastEnriched(biz.updated_at);
       })
       .catch(() => {
         if (cancelled) return;
@@ -162,6 +166,7 @@ export default function SettingsPage() {
     setDeleting(true);
     try {
       await api.deleteAccount(user.id);
+      document.cookie = "geomav_onboarded=; path=/; max-age=0";
       const supabase = createClient();
       await supabase.auth.signOut();
       router.push("/");
@@ -184,6 +189,58 @@ export default function SettingsPage() {
     } catch {
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 2000);
+    }
+  };
+
+  const handleEnrichProfile = async () => {
+    setEnrichStatus("enriching");
+    try {
+      await api.enrichBusiness();
+      setEnrichStatus("done");
+      setLastEnriched(new Date().toISOString());
+      api.getBusiness(user?.id).then((data) => {
+        const biz = data as { name?: string; website?: string; category?: string; description?: string };
+        setProfile({
+          name: String(biz?.name ?? ""),
+          website: String(biz?.website ?? ""),
+          category: String(biz?.category ?? ""),
+          description: String(biz?.description ?? ""),
+        });
+      }).catch(() => {});
+      setTimeout(() => setEnrichStatus("idle"), 3000);
+    } catch {
+      setEnrichStatus("error");
+      setTimeout(() => setEnrichStatus("idle"), 3000);
+    }
+  };
+
+  const handleSaveApiKeys = async () => {
+    if (isDummyUser) return;
+    setApiKeySaveStatus("saving");
+    try {
+      const keyMap: Record<string, string> = {
+        openai: "openai_api_key",
+        anthropic: "anthropic_api_key",
+        gemini: "google_gemini_api_key",
+        perplexity: "perplexity_api_key",
+      };
+      const payload: Record<string, string> = {};
+      for (const [uiKey, apiKey] of Object.entries(keyMap)) {
+        if (apiKeys[uiKey]) {
+          payload[apiKey] = apiKeys[uiKey];
+        }
+      }
+      if (Object.keys(payload).length === 0) {
+        setApiKeySaveStatus("error");
+        setTimeout(() => setApiKeySaveStatus("idle"), 2000);
+        return;
+      }
+      await api.saveApiKeys(payload);
+      setApiKeySaveStatus("saved");
+      setTimeout(() => setApiKeySaveStatus("idle"), 2000);
+    } catch {
+      setApiKeySaveStatus("error");
+      setTimeout(() => setApiKeySaveStatus("idle"), 2000);
     }
   };
 
@@ -406,11 +463,16 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Business Profile */}
+      {/* Truth Store (Business Profile) */}
       <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
-          Business Profile
-        </h2>
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Truth Store
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Your verified business facts. GeoMav validates all AI claims against this profile to calculate your Truth Score.
+          </p>
+        </div>
         <div className="space-y-4">
           <div>
             <label
@@ -485,14 +547,40 @@ export default function SettingsPage() {
               className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
-          <button
-            type="button"
-            onClick={handleSaveProfile}
-            disabled={saveStatus === "saving"}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:opacity-70"
-          >
-            {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved!" : saveStatus === "error" ? "Error" : "Save Profile"}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleSaveProfile}
+              disabled={saveStatus === "saving"}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:opacity-70"
+            >
+              {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved!" : saveStatus === "error" ? "Error" : "Save Profile"}
+            </button>
+            <button
+              type="button"
+              onClick={handleEnrichProfile}
+              disabled={enrichStatus === "enriching" || !profile.website}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-70"
+            >
+              {enrichStatus === "enriching"
+                ? "Enriching..."
+                : enrichStatus === "done"
+                  ? "Profile Enriched!"
+                  : enrichStatus === "error"
+                    ? "Enrichment Failed"
+                    : "Refresh from Website"}
+            </button>
+          </div>
+          {enrichStatus === "done" && (
+            <p className="text-xs text-green-600">
+              Your business profile has been enriched with data from your website.
+            </p>
+          )}
+          {lastEnriched && (
+            <p className="text-xs text-slate-500">
+              Last updated: {new Date(lastEnriched).toLocaleString()}
+            </p>
+          )}
         </div>
       </div>
 
@@ -532,9 +620,17 @@ export default function SettingsPage() {
           ))}
           <button
             type="button"
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+            onClick={handleSaveApiKeys}
+            disabled={apiKeySaveStatus === "saving" || isDummyUser}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:opacity-70"
           >
-            Save Keys
+            {apiKeySaveStatus === "saving"
+              ? "Saving..."
+              : apiKeySaveStatus === "saved"
+                ? "Saved!"
+                : apiKeySaveStatus === "error"
+                  ? "Error"
+                  : "Save Keys"}
           </button>
         </div>
       </div>

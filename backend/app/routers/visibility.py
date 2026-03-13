@@ -1,52 +1,51 @@
 import logging
-from collections import defaultdict
+from collections import Counter, defaultdict
 from typing import Optional
 
 from fastapi import APIRouter
 
 from app.supabase_client import get_supabase
+from app.resolve_business import resolve_business
+from app import cache
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["visibility"])
 
-MOCK_FALLBACK = {
-    "visibility_history": [
-        {"date": "2025-03-01", "score": 65},
-        {"date": "2025-03-02", "score": 67},
-        {"date": "2025-03-03", "score": 69},
-        {"date": "2025-03-04", "score": 71},
-        {"date": "2025-03-05", "score": 73},
-        {"date": "2025-03-06", "score": 75},
-        {"date": "2025-03-07", "score": 76},
-        {"date": "2025-03-08", "score": 77},
-        {"date": "2025-03-09", "score": 78},
-    ],
-    "brand_rankings": [
-        {"brand": "GeoMav", "rank": 3, "score": 78},
-        {"brand": "Competitor A", "rank": 1, "score": 92},
-        {"brand": "Competitor B", "rank": 2, "score": 84},
-    ],
-    "topic_rankings": [
-        {"topic": "geospatial software", "rank": 2, "mentions": 45},
-        {"topic": "mapping solutions", "rank": 4, "mentions": 32},
-        {"topic": "GIS tools", "rank": 3, "mentions": 28},
-    ],
-    "query_responses": [
-        {"query": "best geospatial mapping software", "response_rate": 0.85},
-        {"query": "GIS solutions for businesses", "response_rate": 0.72},
-        {"query": "mapping API providers", "response_rate": 0.68},
-    ],
+ACTIVE_LLM_COUNT = 6
+
+MOCK_FALLBACK: dict = {
+    "visibility_history": [],
+    "brand_rankings": [],
+    "topic_rankings": [],
+    "query_responses": [],
     "filter_applied": "all_time",
 }
 
 
 @router.get("/visibility")
-def get_visibility(filter: Optional[str] = None):
+def get_visibility(filter: Optional[str] = None, user_id: Optional[str] = None):
+    cache_key = f"visibility::{user_id or 'anon'}::{filter or 'all'}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     try:
         supabase = get_supabase()
 
-        mentions_res = supabase.table("mentions").select("*").execute()
+        biz = resolve_business(supabase, user_id)
+        business_id = biz["id"] if biz else None
+        business_name = biz["name"] if biz else "Your Brand"
+
+        if not business_id:
+            return {**MOCK_FALLBACK, "filter_applied": filter or "all_time", "status": "no_data"}
+
+        mentions_res = (
+            supabase.table("mentions")
+            .select("*")
+            .eq("business_id", business_id)
+            .execute()
+        )
         mentions = mentions_res.data or []
 
         by_date: dict[str, list] = defaultdict(list)
@@ -69,51 +68,131 @@ def get_visibility(filter: Optional[str] = None):
         competitors_res = (
             supabase.table("competitors")
             .select("*")
+            .eq("business_id", business_id)
             .order("visibility_score", desc=True)
             .execute()
         )
-        brand_rankings = [
-            {"brand": c["name"], "rank": i + 1, "score": c["visibility_score"]}
-            for i, c in enumerate(competitors_res.data or [])
-        ]
-
-        queries_res = supabase.table("queries").select("*").execute()
-        queries_data = queries_res.data or []
-
-        topic_counts: dict[str, int] = defaultdict(int)
-        for q in queries_data:
-            cat = q.get("category") or "general"
-            topic_counts[cat] += 1
-        topic_rankings = sorted(
-            [{"topic": t, "rank": i + 1, "mentions": c} for i, (t, c) in enumerate(
-                sorted(topic_counts.items(), key=lambda x: x[1], reverse=True)
-            )],
-            key=lambda x: x["rank"],
-        )
-
-        query_responses = []
-        for q in queries_data[:10]:
-            resp_count = (
-                supabase.table("llm_responses")
-                .select("id", count="exact")
-                .eq("query_id", q["id"])
-                .execute()
-            )
-            total_llms = 5
-            rate = (resp_count.count or 0) / total_llms
-            query_responses.append({
-                "query": q.get("text", ""),
-                "response_rate": round(rate, 2),
+        brand_rankings = []
+        for i, c in enumerate(competitors_res.data or []):
+            is_own = c.get("name") == business_name
+            brand_rankings.append({
+                "name": c["name"],
+                "visibility_score": c.get("visibility_score") or 0,
+                "change": c.get("change", 0),
+                "is_own": is_own,
             })
 
-        return {
-            "visibility_history": visibility_history or MOCK_FALLBACK["visibility_history"],
-            "brand_rankings": brand_rankings or MOCK_FALLBACK["brand_rankings"],
-            "topic_rankings": topic_rankings or MOCK_FALLBACK["topic_rankings"],
-            "query_responses": query_responses or MOCK_FALLBACK["query_responses"],
+        queries_res = (
+            supabase.table("queries")
+            .select("*")
+            .eq("business_id", business_id)
+            .execute()
+        )
+        queries_data = queries_res.data or []
+        query_ids = [q["id"] for q in queries_data]
+
+        all_resp_data = []
+        if query_ids:
+            all_responses = (
+                supabase.table("llm_responses")
+                .select("query_id, llm_name, id")
+                .in_("query_id", query_ids)
+                .execute()
+            )
+            all_resp_data = all_responses.data or []
+
+        resp_by_query: dict[str, list] = defaultdict(list)
+        for r in all_resp_data:
+            qid = r.get("query_id")
+            if qid:
+                resp_by_query[qid].append(r)
+
+        mention_by_resp: dict[str, dict] = {}
+        for m in mentions:
+            rid = m.get("response_id")
+            if rid:
+                mention_by_resp[rid] = m
+
+        queries_by_cat: dict[str, list] = defaultdict(list)
+        for q in queries_data:
+            cat = q.get("category") or "general"
+            queries_by_cat[cat].append(q)
+
+        topic_rankings = []
+        competitor_names = [c["name"] for c in (competitors_res.data or []) if c.get("name") != business_name]
+        for cat, cat_queries in queries_by_cat.items():
+            brand_mention_count = 0
+            total_responses_in_cat = 0
+            rank_entries: list[dict] = []
+
+            for q in cat_queries:
+                resps = resp_by_query.get(q["id"], [])
+                total_responses_in_cat += len(resps)
+                for resp in resps:
+                    m = mention_by_resp.get(resp["id"])
+                    if m and m.get("rank"):
+                        brand_mention_count += 1
+
+            own_rank = None
+            if total_responses_in_cat > 0 and brand_mention_count > 0:
+                own_rank = max(1, int((1 - brand_mention_count / total_responses_in_cat) * 10) + 1)
+
+            position = 1
+            for cn in competitor_names[:9]:
+                rank_entries.append({"rank": position, "brand": cn})
+                position += 1
+
+            if own_rank is not None:
+                insert_pos = min(own_rank - 1, len(rank_entries))
+                rank_entries.insert(insert_pos, {"rank": insert_pos + 1, "brand": business_name})
+                for idx in range(len(rank_entries)):
+                    rank_entries[idx]["rank"] = idx + 1
+
+            status = "not_ranked"
+            for re_item in rank_entries:
+                if re_item["brand"] == business_name:
+                    status = "strong" if re_item["rank"] <= 3 else "needs_work"
+                    break
+
+            topic_rankings.append({
+                "topic": cat,
+                "status": status,
+                "rankings": rank_entries[:10],
+            })
+
+        query_responses = []
+        valid_sentiments = {"positive", "neutral", "negative"}
+        for q in queries_data[:15]:
+            resps = resp_by_query.get(q["id"], [])
+            for resp in resps:
+                m = mention_by_resp.get(resp["id"])
+                raw_sentiment = (m.get("sentiment") if m else None) or "neutral"
+                if raw_sentiment not in valid_sentiments:
+                    continue
+                mentioned = m is not None and m.get("rank") is not None
+                query_responses.append({
+                    "id": f"{q['id']}-{resp['id']}",
+                    "query": q.get("text", ""),
+                    "llm_name": resp.get("llm_name", "Unknown"),
+                    "brand_mentioned": mentioned,
+                    "rank": m.get("rank") if m else None,
+                    "sentiment": raw_sentiment,
+                })
+
+        has_real_data = bool(mentions or brand_rankings or query_responses)
+
+        result = {
+            "visibility_history": visibility_history,
+            "brand_rankings": brand_rankings,
+            "topic_rankings": topic_rankings,
+            "query_responses": query_responses,
             "filter_applied": filter or "all_time",
+            "status": "ok" if has_real_data else "no_data",
         }
+
+        cache.set(cache_key, result)
+        return result
 
     except Exception as exc:
         logger.warning("Visibility Supabase query failed, using mock: %s", exc)
-        return {**MOCK_FALLBACK, "filter_applied": filter or "all_time"}
+        return {**MOCK_FALLBACK, "filter_applied": filter or "all_time", "status": "no_data"}

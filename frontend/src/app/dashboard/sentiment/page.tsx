@@ -14,6 +14,7 @@ import {
   Legend,
 } from "recharts";
 import { api } from "@/lib/api";
+import { useUserId } from "@/lib/UserContext";
 import {
   mockSentimentTrend,
   mockSentimentByLLM,
@@ -72,14 +73,43 @@ export default function SentimentPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const [estimated, setEstimated] = useState(false);
+  const userId = useUserId();
+
   useEffect(() => {
     setLoading(true);
+    setEstimated(false);
     api
-      .getSentiment(timeFilter)
-      .then((res: any) => setData(res))
+      .getSentiment(timeFilter, userId)
+      .then(async (res: any) => {
+        const noData =
+          res?.status === "no_data" ||
+          (!res?.query_responses?.length && !res?.sentiment_trends?.length);
+        if (noData) {
+          try {
+            const est: any = await api.getEstimate(userId);
+            if (est?.query_responses?.length) {
+              const so = est.sentiment_overview || { positive: 0.55, neutral: 0.35, negative: 0.10 };
+              setData({
+                ...res,
+                query_responses: est.query_responses.map((q: any) => ({
+                  id: q.id,
+                  query: q.query,
+                  llm_name: q.llm_name,
+                  sentiment: q.sentiment,
+                })),
+                overall_sentiment: so,
+              });
+              setEstimated(true);
+              return;
+            }
+          } catch { /* fall through */ }
+        }
+        setData(res);
+      })
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, [timeFilter]);
+  }, [timeFilter, userId]);
 
   const toPct = (v: number) => (typeof v === "number" && v <= 1 ? v * 100 : v);
 
@@ -103,14 +133,17 @@ export default function SentimentPage() {
         }))
       : [];
 
+  const VALID_SENTIMENTS = new Set(["positive", "neutral", "negative"]);
   const queryResponses =
     data?.query_responses?.length > 0
-      ? data.query_responses.map((r: { id: string; query: string; llm_name: string; sentiment: string }, i: number) => ({
-          id: r.id || `qr-${i}`,
-          query: r.query,
-          llm_name: r.llm_name,
-          sentiment: r.sentiment as "positive" | "neutral" | "negative",
-        }))
+      ? data.query_responses
+          .filter((r: { sentiment: string }) => VALID_SENTIMENTS.has(r.sentiment))
+          .map((r: { id: string; query: string; llm_name: string; sentiment: string }, i: number) => ({
+            id: r.id || `qr-${i}`,
+            query: r.query,
+            llm_name: r.llm_name,
+            sentiment: r.sentiment as "positive" | "neutral" | "negative",
+          }))
       : [];
 
   if (loading && !data) {
@@ -139,6 +172,13 @@ export default function SentimentPage() {
           ))}
         </div>
       </div>
+
+      {/* Estimated banner */}
+      {estimated && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+          This data is <strong>estimated</strong> based on your business profile. Run a scan to get real data.
+        </div>
+      )}
 
       {/* Sentiment Trend Chart - Stacked Area */}
       <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">

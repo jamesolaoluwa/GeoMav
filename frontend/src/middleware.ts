@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  const supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,25 +31,45 @@ export async function middleware(request: NextRequest) {
   const isDashboardRoute = pathname.startsWith("/dashboard");
   const isOnboardingRoute = pathname.startsWith("/onboarding");
 
-  // Unauthenticated users can't access dashboard or onboarding
+  const hasOnboardedCookie =
+    request.cookies.get("geomav_onboarded")?.value === "true";
+
   if ((isDashboardRoute || isOnboardingRoute) && !user) {
     return NextResponse.redirect(new URL("/signin", request.url));
   }
 
-  // Authenticated users on dashboard without completing onboarding
   if (isDashboardRoute && user) {
-    const hasOnboarded =
-      request.cookies.get("geomav_onboarded")?.value === "true";
-    if (!hasOnboarded) {
-      return NextResponse.redirect(new URL("/onboarding", request.url));
+    if (!hasOnboardedCookie) {
+      const { data: businesses } = await supabase
+        .from("businesses")
+        .select("id")
+        .eq("user_id", user.id)
+        .limit(1);
+      if (businesses && businesses.length > 0) {
+        supabaseResponse.cookies.set("geomav_onboarded", "true", {
+          path: "/",
+          maxAge: 31536000,
+        });
+      } else {
+        return NextResponse.redirect(new URL("/onboarding", request.url));
+      }
     }
   }
 
-  // Authenticated users on auth pages -- check if they have a business already
   if (isAuthRoute && user) {
-    const hasOnboarded =
-      request.cookies.get("geomav_onboarded")?.value === "true";
-    if (hasOnboarded) {
+    if (hasOnboardedCookie) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    const { data: businesses } = await supabase
+      .from("businesses")
+      .select("id")
+      .eq("user_id", user.id)
+      .limit(1);
+    if (businesses && businesses.length > 0) {
+      supabaseResponse.cookies.set("geomav_onboarded", "true", {
+        path: "/",
+        maxAge: 31536000,
+      });
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     return NextResponse.redirect(new URL("/onboarding", request.url));

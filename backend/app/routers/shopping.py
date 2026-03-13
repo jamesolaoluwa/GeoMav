@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import APIRouter
 
 from app.supabase_client import get_supabase
+from app.resolve_business import resolve_business
 
 logger = logging.getLogger(__name__)
 
@@ -26,13 +27,13 @@ MOCK_FALLBACK = {
 
 
 @router.get("/shopping")
-def get_shopping(filter: Optional[str] = None):
+def get_shopping(filter: Optional[str] = None, user_id: Optional[str] = None):
     try:
         supabase = get_supabase()
 
-        biz = supabase.table("businesses").select("id, name, services").limit(1).execute()
-        business_id = biz.data[0]["id"] if biz.data else None
-        services = biz.data[0].get("services") if biz.data else None
+        biz = resolve_business(supabase, user_id, "id, name, services")
+        business_id = biz["id"] if biz else None
+        services = biz.get("services") if biz else None
 
         responses_res = supabase.table("llm_responses").select("*").execute()
         responses = responses_res.data or []

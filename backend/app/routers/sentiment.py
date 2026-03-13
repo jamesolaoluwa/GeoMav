@@ -5,6 +5,8 @@ from typing import Optional
 from fastapi import APIRouter
 
 from app.supabase_client import get_supabase
+from app.resolve_business import resolve_business
+from app import cache
 
 logger = logging.getLogger(__name__)
 
@@ -41,19 +43,40 @@ def _sentiment_ratios(sentiments: list[str]) -> dict:
     }
 
 
+VALID_SENTIMENTS = {"positive", "neutral", "negative"}
+
+
 @router.get("/sentiment")
-def get_sentiment(filter: Optional[str] = None):
+def get_sentiment(filter: Optional[str] = None, user_id: Optional[str] = None):
+    cache_key = f"sentiment::{user_id or 'anon'}::{filter or 'all'}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     try:
         supabase = get_supabase()
 
-        mentions_res = supabase.table("mentions").select("*").execute()
-        mentions = mentions_res.data or []
+        biz = resolve_business(supabase, user_id)
+        business_id = biz["id"] if biz else None
+
+        if not business_id:
+            return {**MOCK_FALLBACK, "filter_applied": filter or "all_time", "status": "no_data"}
+
+        mentions_res = (
+            supabase.table("mentions")
+            .select("*")
+            .eq("business_id", business_id)
+            .execute()
+        )
+        raw_mentions = mentions_res.data or []
+
+        mentions = [m for m in raw_mentions if m.get("sentiment") in VALID_SENTIMENTS]
 
         by_date: dict[str, list[str]] = defaultdict(list)
         all_sentiments: list[str] = []
 
         for m in mentions:
-            s = m.get("sentiment", "neutral")
+            s = m["sentiment"]
             all_sentiments.append(s)
             date_key = (m.get("created_at") or "")[:10]
             if date_key:
@@ -65,22 +88,37 @@ def get_sentiment(filter: Optional[str] = None):
         )
 
         resp_ids = list({m["response_id"] for m in mentions if m.get("response_id")})
-        llm_sentiments: dict[str, list[str]] = defaultdict(list)
-
+        llm_by_id: dict[str, str] = {}
+        query_by_resp: dict[str, str] = {}
         if resp_ids:
-            for rid in resp_ids:
-                resp = (
-                    supabase.table("llm_responses")
-                    .select("id, llm_name")
-                    .eq("id", rid)
-                    .limit(1)
-                    .execute()
-                )
-                if resp.data:
-                    llm_name = resp.data[0]["llm_name"]
-                    for m in mentions:
-                        if m.get("response_id") == rid:
-                            llm_sentiments[llm_name].append(m.get("sentiment", "neutral"))
+            all_resps = (
+                supabase.table("llm_responses")
+                .select("id, llm_name, query_id")
+                .in_("id", resp_ids)
+                .execute()
+            )
+            for r in (all_resps.data or []):
+                llm_by_id[r["id"]] = r["llm_name"]
+                if r.get("query_id"):
+                    query_by_resp[r["id"]] = r["query_id"]
+
+        query_ids = list(set(query_by_resp.values()))
+        query_text_map: dict[str, str] = {}
+        if query_ids:
+            queries_res = (
+                supabase.table("queries")
+                .select("id, text")
+                .in_("id", query_ids)
+                .execute()
+            )
+            query_text_map = {q["id"]: q["text"] for q in (queries_res.data or [])}
+
+        llm_sentiments: dict[str, list[str]] = defaultdict(list)
+        for m in mentions:
+            rid = m.get("response_id")
+            llm_name = llm_by_id.get(rid)
+            if llm_name:
+                llm_sentiments[llm_name].append(m["sentiment"])
 
         sentiment_by_llm = [
             {"llm": llm, **_sentiment_ratios(sents)}
@@ -92,26 +130,32 @@ def get_sentiment(filter: Optional[str] = None):
         query_responses = []
         for m in mentions:
             rid = m.get("response_id")
-            llm_name = "Unknown"
-            if rid and rid in {r for r in resp_ids}:
-                for llm, sents in llm_sentiments.items():
-                    llm_name = llm
-                    break
+            llm_name = llm_by_id.get(rid, "Unknown")
+            qid = query_by_resp.get(rid)
+            query_text = query_text_map.get(qid, "") if qid else ""
+            if not query_text:
+                continue
             query_responses.append({
                 "id": m.get("id", ""),
-                "query": m.get("query_text") or m.get("source", "Unknown query"),
+                "query": query_text,
                 "llm_name": llm_name,
-                "sentiment": m.get("sentiment", "neutral"),
+                "sentiment": m["sentiment"],
             })
 
-        return {
+        has_real_data = bool(mentions)
+
+        result = {
             "sentiment_trends": sentiment_trends or MOCK_FALLBACK["sentiment_trends"],
             "sentiment_by_llm": sentiment_by_llm or MOCK_FALLBACK["sentiment_by_llm"],
             "overall_sentiment": overall,
             "query_responses": query_responses,
             "filter_applied": filter or "all_time",
+            "status": "ok" if has_real_data else "no_data",
         }
+
+        cache.set(cache_key, result)
+        return result
 
     except Exception as exc:
         logger.warning("Sentiment Supabase query failed, using mock: %s", exc)
-        return {**MOCK_FALLBACK, "filter_applied": filter or "all_time"}
+        return {**MOCK_FALLBACK, "filter_applied": filter or "all_time", "status": "no_data"}

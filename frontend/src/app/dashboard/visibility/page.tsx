@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { api } from "@/lib/api";
+import { useUserId } from "@/lib/UserContext";
 import {
   mockVisibilityTrend,
   mockCompetitors,
@@ -159,20 +160,43 @@ export default function VisibilityPage() {
   const [comparison, setComparison] = useState<ComparisonData | null>(null);
   const [comparing, setComparing] = useState(false);
 
+  const [estimated, setEstimated] = useState(false);
+
+  const userId = useUserId();
+
   useEffect(() => {
     setLoading(true);
+    setEstimated(false);
     api
-      .getVisibility(timeFilter)
-      .then((res: any) => setData(res))
+      .getVisibility(timeFilter, userId)
+      .then(async (res: any) => {
+        const noData =
+          res?.status === "no_data" ||
+          (!res?.brand_rankings?.length && !res?.topic_rankings?.length && !res?.query_responses?.length);
+        if (noData) {
+          try {
+            const est: any = await api.getEstimate(userId);
+            setData({
+              ...res,
+              brand_rankings: est.competitors || [],
+              topic_rankings: est.topic_rankings || [],
+              query_responses: est.query_responses || [],
+            });
+            setEstimated(true);
+            return;
+          } catch { /* fall through */ }
+        }
+        setData(res);
+      })
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, [timeFilter]);
+  }, [timeFilter, userId]);
 
   const handleCompare = async () => {
     if (!p1Start || !p1End || !p2Start || !p2End) return;
     setComparing(true);
     try {
-      const biz = (await api.getBusiness()) as { id?: string } | null;
+      const biz = (await api.getBusiness(userId)) as { id?: string } | null;
       const businessId = (biz as any)?.id || "";
       const res = await api.getHistoryComparison(businessId, p1Start, p1End, p2Start, p2End);
       setComparison(res as ComparisonData);
@@ -191,29 +215,33 @@ export default function VisibilityPage() {
         }))
       : [];
 
-  const brandRankings: CompetitorVisibility[] =
+  const brandRankings: (CompetitorVisibility & { is_own?: boolean })[] =
     data?.brand_rankings?.length > 0
       ? data.brand_rankings.map((r: any) => ({
-          name: r.brand ?? r.name ?? "Unknown",
-          visibility_score: r.score ?? r.visibility_score ?? 0,
+          name: r.name ?? "Unknown",
+          visibility_score: r.visibility_score ?? 0,
           change: r.change ?? 0,
+          is_own: r.is_own ?? false,
         }))
       : [];
 
-  const topicRankings =
-    data?.topic_rankings?.length > 0 &&
-    data.topic_rankings.some((t: any) => Array.isArray(t.rankings))
-      ? (data.topic_rankings as TopicRanking[])
+  const topicRankings: TopicRanking[] =
+    data?.topic_rankings?.length > 0
+      ? data.topic_rankings.map((t: any) => ({
+          topic: t.topic ?? "",
+          status: t.status ?? "not_ranked",
+          rankings: Array.isArray(t.rankings) ? t.rankings : [],
+        }))
       : [];
 
   const queryResponses: typeof mockQueryResponses = data?.query_responses?.length > 0
-    ? data.query_responses.map((q: { query: string; response_rate: number }, i: number) => ({
-        id: `qr-${i}`,
-        query: q.query,
-        llm_name: "ChatGPT" as const,
-        brand_mentioned: (q.response_rate || 0) > 0.5,
-        rank: null as number | null,
-        sentiment: "neutral" as const,
+    ? data.query_responses.map((q: any, i: number) => ({
+        id: q.id ?? `qr-${i}`,
+        query: q.query ?? "",
+        llm_name: q.llm_name ?? "Unknown",
+        brand_mentioned: q.brand_mentioned ?? false,
+        rank: q.rank ?? null,
+        sentiment: q.sentiment ?? "neutral",
       }))
     : [];
 
@@ -245,6 +273,13 @@ export default function VisibilityPage() {
           </div>
         </div>
       </div>
+
+      {/* Estimated banner */}
+      {estimated && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+          This data is <strong>estimated</strong> based on your business profile. Run a scan to get real data.
+        </div>
+      )}
 
       {/* Visibility Score History Chart */}
       <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
@@ -434,7 +469,7 @@ export default function VisibilityPage() {
             <div
               key={row.name}
               className={`flex items-center justify-between px-5 py-3 ${
-                row.name === "Your Brand"
+                row.is_own
                   ? "bg-blue-50/80 font-medium"
                   : "hover:bg-slate-50/50"
               }`}

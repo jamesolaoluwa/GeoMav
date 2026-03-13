@@ -23,6 +23,8 @@ export const mockDashboardMetrics: DashboardMetrics = {
   claim_accuracy: 87.2,
   claim_accuracy_change: 2.1,
   active_hallucinations: 5,
+  truth_score: 60.0,
+  truth_score_change: 5.2,
 };
 
 export const mockVisibilityTrend: VisibilityTrend[] = [

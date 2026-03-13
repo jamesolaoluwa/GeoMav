@@ -1,58 +1,38 @@
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 
 from app.schemas import ClaimUpdate
 from app.supabase_client import get_supabase
+from app.resolve_business import resolve_business
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["hallucinations"])
 
-MOCK_FALLBACK_CLAIMS = [
-    {
-        "id": "claim-001",
-        "llm": "ChatGPT",
-        "claim": "GeoMav was founded in 2018",
-        "actual": "GeoMav was founded in 2020",
-        "status": "pending",
-        "created_at": "2025-03-10T14:30:00Z",
-    },
-    {
-        "id": "claim-002",
-        "llm": "Claude",
-        "claim": "GeoMav has 500+ employees",
-        "actual": "GeoMav has 50+ employees",
-        "status": "correction_deployed",
-        "created_at": "2025-03-09T09:15:00Z",
-    },
-    {
-        "id": "claim-003",
-        "llm": "Gemini",
-        "claim": "GeoMav is headquartered in San Francisco",
-        "actual": "GeoMav is headquartered in Austin, TX",
-        "status": "resolved",
-        "created_at": "2025-03-08T11:00:00Z",
-    },
-]
-
-
 @router.get("/hallucinations")
-def list_hallucinations():
+def list_hallucinations(user_id: Optional[str] = None):
     try:
         supabase = get_supabase()
-        claims_res = supabase.table("claims").select("*").execute()
+        biz = resolve_business(supabase, user_id)
+        q = supabase.table("claims").select("*")
+        if biz:
+            q = q.eq("business_id", biz["id"])
+        claims_res = q.execute()
         claims = claims_res.data or []
 
         enriched = []
         for c in claims:
             item = {
                 "id": c["id"],
-                "claim": c.get("claim_value", ""),
-                "actual": c.get("verified_value", ""),
+                "claim_value": c.get("claim_value", ""),
+                "verified_value": c.get("verified_value", ""),
                 "status": c.get("status", "pending"),
                 "created_at": c.get("created_at", ""),
                 "claim_type": c.get("claim_type", ""),
+                "llm_name": "Unknown",
+                "query_text": "",
             }
             resp_id = c.get("response_id")
             if resp_id:
@@ -64,7 +44,7 @@ def list_hallucinations():
                     .execute()
                 )
                 if resp.data:
-                    item["llm"] = resp.data[0].get("llm_name", "Unknown")
+                    item["llm_name"] = resp.data[0].get("llm_name", "Unknown")
                     query_id = resp.data[0].get("query_id")
                     if query_id:
                         q = (
@@ -75,18 +55,14 @@ def list_hallucinations():
                             .execute()
                         )
                         if q.data:
-                            item["query"] = q.data[0].get("text", "")
-                else:
-                    item["llm"] = "Unknown"
-            else:
-                item["llm"] = "Unknown"
+                            item["query_text"] = q.data[0].get("text", "")
             enriched.append(item)
 
         return {"claims": enriched, "total": len(enriched)}
 
     except Exception as exc:
         logger.warning("Hallucinations Supabase query failed, using mock: %s", exc)
-        return {"claims": MOCK_FALLBACK_CLAIMS, "total": len(MOCK_FALLBACK_CLAIMS)}
+        return {"claims": [], "total": 0}
 
 
 @router.patch("/hallucinations/{claim_id}")
