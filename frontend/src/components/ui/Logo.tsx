@@ -9,9 +9,8 @@ export default function Logo({ variant = "dark", className = "" }: LogoProps) {
   const isLight = variant === "light";
 
   return (
-    <a
-      href="/"
-      className={`flex items-center gap-3 ${className}`}
+    <span
+      className={`inline-flex items-center gap-3 ${className}`}
       aria-label="GeoMav home"
     >
       <Image
@@ -22,6 +21,6 @@ export default function Logo({ variant = "dark", className = "" }: LogoProps) {
         priority={variant === "dark"}
         className={`h-9 w-auto md:h-10 ${isLight ? "brightness-110" : ""}`}
       />
-    </a>
+    </span>
   );
 }

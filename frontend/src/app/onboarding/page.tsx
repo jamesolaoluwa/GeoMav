@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Logo from "@/components/ui/Logo";
 import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase";
 
@@ -160,8 +161,8 @@ export default function OnboardingPage() {
       {/* Header */}
       <header className="border-b border-gray-200 bg-white px-6 py-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <Link href="/" className="text-xl font-semibold text-[#1a1225]" style={{ fontFamily: "var(--font-display)" }}>
-            GeoMav
+          <Link href="/" className="flex items-center">
+            <Logo className="h-7 w-auto opacity-80 transition hover:opacity-100" />
           </Link>
           <StepIndicator current={step} />
         </div>

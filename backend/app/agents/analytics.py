@@ -212,6 +212,8 @@ VALID_SENTIMENTS = {"positive", "neutral", "negative"}
 async def run_analytics_scan(
     prompts: list[str],
     business_name: str = "Your Brand",
+    business_id: Optional[str] = None,
+    query_ids: Optional[list[str]] = None,
     supabase_client=None,
     query_ids: Optional[list[str]] = None,
     business_id: Optional[str] = None,
@@ -281,8 +283,8 @@ async def run_analytics_scan(
         }
 
     tasks = [
-        _process_one(prompt_text, llm_name, api_key)
-        for prompt_text in prompts
+        _process_one(prompt_text, llm_name, api_key, qid)
+        for (prompt_text, qid) in zip(prompts, _query_ids)
         for llm_name, api_key in llm_configs.items()
     ]
     results = await asyncio.gather(*tasks)

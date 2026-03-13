@@ -180,6 +180,7 @@ def generate_correction(claim: dict, classification: dict) -> Optional[dict]:
 async def run_reinforcement(
     llm_responses: list[dict],
     business_profile: dict,
+    business_id: Optional[str] = None,
     supabase_client=None,
 ) -> dict:
     """

@@ -10,78 +10,78 @@ import Logo from "@/components/ui/Logo";
 // ══════════════════════════════════════════════════════════════════════════════
 
 const BUSINESS = {
-  name: "Philander Smith University",
-  tagline: "www.philander.edu",
-  emoji: "🎓",
+  name: "Jasmine's Bakery",
+  tagline: "Family-owned bakery · Austin, TX · Est. 2014",
+  emoji: "🧁",
 };
 
-const BEFORE = { visibility: 18, rank: 9, rankTotal: 10, accuracy: 42, hallucinations: 5 };
-const AFTER  = { visibility: 84, rank: 2,  rankTotal: 10, accuracy: 98, hallucinations: 0 };
+const BEFORE = { visibility: 24, rank: 7, rankTotal: 10, accuracy: 48, hallucinations: 6 };
+const AFTER  = { visibility: 82, rank: 2,  rankTotal: 10, accuracy: 98, hallucinations: 0 };
 
 const LLM_SCANS = [
   {
     llm: "ChatGPT",
     dot: "#10a37f",
-    bad: "Permanently closed in 2020. Location is now vacant.",
+  bad: "Jasmine's Bakery permanently closed in 2020. Location is now vacant.",
     claim: "Permanently closed in 2020",
     type: "Fabricated",
-    good: "Open and operating. Still under original ownership.",
+  good: "Open and operating since 2014.",
   },
   {
     llm: "Gemini",
     dot: "#4285f4",
-    bad: "Previously known for quality but sold in 2022. New ownership — reviews are mixed.",
+  bad: "Bakery sold to new ownership in 2022. Quality may have changed.",
     claim: "Sold to new ownership in 2022",
     type: "Fabricated",
-    good: "Still owned and operated by the founding team.",
+  good: "Still owned and run by Jasmine.",
   },
   {
     llm: "Perplexity",
     dot: "#20b2aa",
-    bad: "Cash-only. No reservations, no takeout, no online ordering available.",
-    claim: "Cash only, no online ordering",
+  bad: "Cash-only bakery with no online orders or pickup.",
+  claim: "Cash only",
     type: "Outdated",
-    good: "Accepts all major cards, Apple Pay. Online ordering available.",
+  good: "Accepts all major cards. Online ordering available.",
   },
   {
     llm: "Claude",
     dot: "#d97706",
-    bad: "Limited menu. No catering services or vegetarian options.",
-    claim: "No catering or vegan options",
+  bad: "No catering options or vegan-friendly items.",
+  claim: "No vegan options available",
     type: "Fabricated",
-    good: "Full menu including vegan options. Catering available.",
+  good: "Custom cakes, catering, and vegan options available.",
   },
   {
     llm: "Bing",
     dot: "#0078d4",
-    bad: "Website outdated. Business status unknown — may no longer be operating.",
-    claim: "Status unknown, possibly closed",
+  bad: "Business status unknown — may no longer be operating.",
+  claim: "Status unknown",
     type: "Misleading",
-    good: "Fully operational. Award-winning reputation.",
+  good: "Active neighborhood bakery with daily service.",
   },
   {
     llm: "DeepSeek",
     dot: "#6366f1",
-    bad: "No significant online presence or recent activity detected.",
+  bad: "No online presence detected for Jasmine's Bakery.",
     claim: "No online presence detected",
     type: "Misleading",
-    good: "Active on Google, Yelp, Instagram. Strong reviews.",
+  good: "Website, Google, Yelp, and Instagram active.",
   },
 ];
 
 const JSON_LD_SNIPPET = `{
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
-  "name": "Your Business",
+  "name": "Jasmine's Bakery",
   "openingHours": "Mo-Su 09:00-21:00",
-  "acceptsReservations": true,
-  "paymentAccepted": "Cash, Visa, Mastercard, Apple Pay",
+  "acceptsReservations": false,
+  "paymentAccepted": "Cash, Visa, Mastercard, Amex, Apple Pay",
   "priceRange": "$$",
-  "url": "https://yourbusiness.com",
+  "url": "https://jasminesbakery.com",
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "123 Main St",
-    "addressLocality": "Your City"
+    "streetAddress": "214 Cedar St",
+    "addressLocality": "Austin"
   }
 }`;
 
@@ -109,23 +109,36 @@ function ClaimBadge({ type }: { type: string }) {
 function SceneIntro({ onStart }: { onStart: () => void }) {
   return (
     <div className="flex flex-col items-center text-center">
-      <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/60 bg-white/50 shadow-sm backdrop-blur-md">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#8B7CB5" strokeWidth="1.5">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
-            <path d="M2 12A10 10 0 0 1 12 2" strokeLinecap="round" opacity="0.4" />
-            <path d="M12 22a10 10 0 0 1-10-10" strokeLinecap="round" opacity="0.2" />
-          </svg>
+      <div className="mb-8 flex items-center justify-center gap-3 rounded-2xl border border-white/60 bg-white/50 px-4 py-3 shadow-sm backdrop-blur-md">
+        {[
+          { src: "/images/logos/claude-logo.png", alt: "Claude" },
+          { src: "/images/logos/gemini.png", alt: "Gemini" },
+          { src: "/images/logos/perplexity-logo.png", alt: "Perplexity" },
+          { src: "/images/logos/deepseek.png", alt: "DeepSeek" },
+          { src: "/images/logos/copilot-logo.png", alt: "ChatGPT & others" },
+        ].map((logo) => (
+          <div
+            key={logo.alt}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 shadow-sm"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logo.src}
+              alt={logo.alt}
+              className="h-6 w-6 object-contain"
+            />
+          </div>
+        ))}
       </div>
 
       <h1 className="text-4xl font-bold tracking-tight text-slate-800 sm:text-5xl">
         What does AI say<br />
-        <span className="text-[#7B6B9B]">about your business?</span>
+        <span className="text-[#7B6B9B]">about Jasmine&apos;s bakery?</span>
       </h1>
 
       <p className="mx-auto mt-5 max-w-lg text-lg text-slate-600">
-        See how AI platforms represent your business across ChatGPT, Gemini,
-        Claude, and more.
+        See how AI platforms represent Jasmine&apos;s business across ChatGPT,
+        Gemini, Claude, and more.
       </p>
 
       <div className="mt-10 flex items-center gap-4 rounded-2xl border border-white/60 bg-white/50 px-6 py-4 shadow-sm backdrop-blur-md">
@@ -142,7 +155,7 @@ function SceneIntro({ onStart }: { onStart: () => void }) {
         onClick={onStart}
         className="mt-8 rounded-xl bg-[#8B7CB5] px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-[#8B7CB5]/20 transition hover:bg-[#9d8ec8] hover:shadow-lg active:scale-95"
       >
-        Check AI visibility →
+        Check AI visibility 
       </button>
       <p className="mt-3 text-xs text-slate-500">Use controls below to navigate</p>
     </div>
@@ -159,7 +172,7 @@ function SceneProblem({ onStartScan }: { onStartScan: () => void }) {
           The Problem
         </span>
         <h2 className="mt-4 text-3xl font-bold text-slate-800">
-          Here&apos;s what AI says about your business.<br />
+          Here&apos;s what AI says about Jasmine&apos;s bakery.<br />
           <span className="text-red-600">Inaccurate claims detected.</span>
         </h2>
       </div>
@@ -174,7 +187,38 @@ function SceneProblem({ onStartScan }: { onStartScan: () => void }) {
             className="rounded-2xl border border-red-200/50 bg-red-50/40 p-4 backdrop-blur-md"
           >
             <div className="mb-3 flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.dot }} />
+              {/* Logo behind platform name */}
+              {s.llm === "ChatGPT" && (
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/images/logos/copilot-logo.png"
+                    alt="ChatGPT logo"
+                    className="h-4 w-4 object-contain"
+                  />
+                </div>
+              )}
+              {s.llm === "Gemini" && (
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/images/logos/gemini.png"
+                    alt="Gemini logo"
+                    className="h-4 w-4 object-contain"
+                  />
+                </div>
+              )}
+              {s.llm === "Perplexity" && (
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/images/logos/perplexity-logo.png"
+                    alt="Perplexity logo"
+                    className="h-4 w-4 object-contain"
+                  />
+                </div>
+              )}
+
               <span className="text-sm font-semibold text-slate-800">{s.llm}</span>
               <span className="ml-auto text-xs text-red-600">⚠ Wrong</span>
             </div>
@@ -195,11 +239,11 @@ function SceneProblem({ onStartScan }: { onStartScan: () => void }) {
         <div className="flex flex-wrap justify-center gap-2">
           {[
             "✓ Open and operating",
-            "✓ Original ownership",
+            "✓ Family owned bakery",
             "✓ Accepts all cards",
             "✓ Online ordering",
-            "✓ Catering available",
-            "✓ Full menu options",
+            "✓ Custom cakes and catering",
+            "✓ Vegan options available",
           ].map((f) => (
             <span
               key={f}
@@ -232,8 +276,8 @@ function SceneScan({ scannedCount }: { scannedCount: number }) {
         <span className="rounded-full border border-[#8B7CB5]/30 bg-[#8B7CB5]/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#7B6B9B] backdrop-blur-sm">
           Scanning
         </span>
-        <h2 className="mt-4 text-3xl font-bold text-slate-800">GeoMav queries every AI platform.</h2>
-        <p className="mt-3 text-slate-600">Extracting every claim made about your business.</p>
+  <h2 className="mt-4 text-3xl font-bold text-slate-800">GeoMav queries every AI platform.</h2>
+  <p className="mt-3 text-slate-600">Extracting every claim made about Jasmine&apos;s bakery.</p>
       </div>
 
       <div className="space-y-2.5">
@@ -269,7 +313,68 @@ function SceneScan({ scannedCount }: { scannedCount: number }) {
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full" style={{ background: s.dot }} />
+                  {/* Main platform logos next to name */}
+                  {s.llm === "ChatGPT" && (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/images/logos/copilot-logo.png"
+                        alt="ChatGPT logo"
+                        className="h-5 w-5 object-contain"
+                      />
+                    </>
+                  )}
+                  {s.llm === "Gemini" && (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/images/logos/gemini.png"
+                        alt="Gemini logo"
+                        className="h-5 w-5 object-contain"
+                      />
+                    </>
+                  )}
+                  {s.llm === "Claude" && (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/images/logos/claude-logo.png"
+                        alt="Claude logo"
+                        className="h-5 w-5 object-contain"
+                      />
+                    </>
+                  )}
+                  {s.llm === "Perplexity" && (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/images/logos/perplexity-logo.png"
+                        alt="Perplexity logo"
+                        className="h-5 w-5 object-contain"
+                      />
+                    </>
+                  )}
+                  {s.llm === "Bing" && (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/images/logos/gemini.png"
+                        alt="Bing logo"
+                        className="h-5 w-5 object-contain opacity-70"
+                      />
+                    </>
+                  )}
+                  {s.llm === "DeepSeek" && (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/images/logos/deepseek.png"
+                        alt="DeepSeek logo"
+                        className="h-5 w-5 object-contain"
+                      />
+                    </>
+                  )}
+
                   <span className="text-sm font-semibold text-slate-800">{s.llm}</span>
                   {active && (
                     <span className="animate-pulse text-xs text-[#7B6B9B]">Querying…</span>
@@ -321,7 +426,7 @@ function SceneIssues({ onGenerateCorrections }: { onGenerateCorrections: () => v
         </span>
         <h2 className="mt-4 text-3xl font-bold text-slate-800">Every AI. Every claim. Classified.</h2>
         <p className="mt-3 text-slate-600">
-          GeoMav extracted and verified each incorrect claim against your verified business profile.
+          GeoMav extracted and verified each incorrect claim about Jasmine&apos;s bakery against the real business details.
         </p>
       </div>
 
@@ -349,7 +454,68 @@ function SceneIssues({ onGenerateCorrections }: { onGenerateCorrections: () => v
               >
                 <td className="whitespace-nowrap px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full" style={{ background: s.dot }} />
+                    {/* Real platform logos instead of circular dots */}
+                    {s.llm === "ChatGPT" && (
+                      <div className="flex h-6 w-6 items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/images/logos/copilot-logo.png"
+                          alt="ChatGPT logo"
+                          className="h-5 w-5 object-contain"
+                        />
+                      </div>
+                    )}
+                    {s.llm === "Gemini" && (
+                      <div className="flex h-6 w-6 items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/images/logos/gemini.png"
+                          alt="Gemini logo"
+                          className="h-5 w-5 object-contain"
+                        />
+                      </div>
+                    )}
+                    {s.llm === "Claude" && (
+                      <div className="flex h-6 w-6 items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/images/logos/claude-logo.png"
+                          alt="Claude logo"
+                          className="h-5 w-5 object-contain"
+                        />
+                      </div>
+                    )}
+                    {s.llm === "Perplexity" && (
+                      <div className="flex h-6 w-6 items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/images/logos/perplexity-logo.png"
+                          alt="Perplexity logo"
+                          className="h-5 w-5 object-contain"
+                        />
+                      </div>
+                    )}
+                    {s.llm === "Bing" && (
+                      <div className="flex h-6 w-6 items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/images/logos/gemini.png"
+                          alt="Bing logo"
+                          className="h-5 w-5 object-contain opacity-70"
+                        />
+                      </div>
+                    )}
+                    {s.llm === "DeepSeek" && (
+                      <div className="flex h-6 w-6 items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/images/logos/deepseek.png"
+                          alt="DeepSeek logo"
+                          className="h-5 w-5 object-contain"
+                        />
+                      </div>
+                    )}
+
                     <span className="text-sm font-medium text-slate-800">{s.llm}</span>
                   </div>
                 </td>
@@ -374,7 +540,7 @@ function SceneIssues({ onGenerateCorrections }: { onGenerateCorrections: () => v
           <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
         <p className="text-sm text-slate-700">
-          GeoMav is generating corrections for your business — structured data, /llms.txt, and FAQ schemas.
+          GeoMav is generating corrections for Jasmine&apos;s bakery — structured data, /llms.txt, and FAQ schemas.
         </p>
       </motion.div>
 
@@ -402,7 +568,7 @@ function SceneFix({ typedText }: { typedText: string }) {
           Generating
         </span>
         <h2 className="mt-4 text-3xl font-bold text-slate-800">
-          GeoMav writes the truth in a language AI understands.
+          GeoMav writes the truth about Jasmine&apos;s bakery in a language AI understands.
         </h2>
         <p className="mt-3 text-slate-600">
           Structured data, /llms.txt, FAQ schemas — formatted for AI readability.
@@ -488,13 +654,6 @@ function SceneRescan({ onComplete }: { onComplete: () => void }) {
     return () => clearInterval(t);
   }, []);
 
-  useEffect(() => {
-    if (greenCount >= LLM_SCANS.length) {
-      const timeout = setTimeout(onComplete, 1500);
-      return () => clearTimeout(timeout);
-    }
-  }, [greenCount, onComplete]);
-
   return (
     <div>
       <div className="mb-8 text-center">
@@ -551,6 +710,21 @@ function SceneRescan({ onComplete }: { onComplete: () => void }) {
           );
         })}
       </div>
+
+      {greenCount >= LLM_SCANS.length && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-8 flex justify-center"
+        >
+          <button
+            onClick={onComplete}
+            className="rounded-xl bg-[#8B7CB5] px-8 py-3.5 text-sm font-semibold text-white shadow-md shadow-[#8B7CB5]/20 transition hover:bg-[#9d8ec8] hover:shadow-lg active:scale-95"
+          >
+            View results →
+          </button>
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -575,7 +749,7 @@ function SceneAfter({
           After GeoMav
         </span>
         <h2 className="mt-4 text-3xl font-bold text-slate-900">
-          Your business is seen clearly.<br />
+          Jasmine&apos;s bakery is now seen clearly.<br />
           <span className="text-emerald-700">Everywhere that matters.</span>
         </h2>
       </div>
@@ -650,13 +824,13 @@ function SceneReportReady() {
       </motion.div>
 
       <h2 className="text-4xl font-bold text-slate-800">
-        Your AI visibility report is ready.<br />
+        Jasmine&apos;s AI visibility report is ready.<br />
         <span className="text-[#7B6B9B]">Corrections applied and verified.</span>
       </h2>
 
       <p className="mx-auto mt-5 max-w-md text-lg text-slate-600">
-        Your business is now accurately represented across all AI platforms.
-        Re-run scans anytime to monitor changes.
+        AI platforms now shows more accurate information about Jasmine&apos;s bakery.
+        Customers searching with AI assistants can now find this business easier.
       </p>
 
       <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
@@ -695,7 +869,7 @@ export default function DemoPage() {
   const prev = useCallback(() => goTo(scene - 1), [scene, goTo]);
   const next = useCallback(() => goTo(scene + 1), [scene, goTo]);
 
-  // Scene 2: sequential scan animation → auto-advance when AI finishes scanning
+  // Scene 2: sequential scan animation (no auto-advance)
   useEffect(() => {
     if (scene !== 2) { setScannedCount(0); return; }
     let count = 0;
@@ -704,27 +878,23 @@ export default function DemoPage() {
       setScannedCount(count);
       if (count >= LLM_SCANS.length) {
         clearInterval(t);
-        setTimeout(() => setScene(3), 1500);
       }
     }, 650);
     return () => clearInterval(t);
   }, [scene]);
 
-  // Scene 4: typewriter → auto-advance when AI finishes generating
+  // Scene 4: typewriter (no auto-advance)
   useEffect(() => {
     if (scene !== 4) { setTypedText(""); return; }
     let i = 0;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const t = setInterval(() => {
       setTypedText(JSON_LD_SNIPPET.slice(0, ++i));
       if (i >= JSON_LD_SNIPPET.length) {
         clearInterval(t);
-        timeoutId = setTimeout(() => setScene(5), 1500);
       }
     }, 16);
     return () => {
       clearInterval(t);
-      if (timeoutId !== null) clearTimeout(timeoutId);
     };
   }, [scene]);
 

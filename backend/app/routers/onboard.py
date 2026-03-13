@@ -531,6 +531,8 @@ async def run_initial_scan(req: OnboardScanRequest, background_tasks: Background
                 result = await run_analytics_scan(
                     prompts=scan_prompts,
                     business_name=business.get("name", ""),
+                    business_id=req.business_id,
+                    query_ids=scan_query_ids,
                     supabase_client=supabase,
                     query_ids=scan_query_ids,
                     business_id=req.business_id,

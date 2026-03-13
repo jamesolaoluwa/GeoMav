@@ -167,6 +167,7 @@ def generate_faq(business: dict) -> list[dict]:
 
 async def run_enrichment(
     business: dict,
+    business_id: Optional[str] = None,
     supabase_client=None,
 ) -> dict:
     """
@@ -219,8 +220,13 @@ async def run_enrichment(
 
     if supabase_client:
         try:
+            if business_id:
+                supabase_client.table("content_sections").delete().eq("business_id", business_id).execute()
             for section in content_sections:
-                supabase_client.table("content_sections").upsert(section).execute()
+                row = {**section}
+                if business_id:
+                    row["business_id"] = business_id
+                supabase_client.table("content_sections").insert(row).execute()
         except Exception:
             pass
 
