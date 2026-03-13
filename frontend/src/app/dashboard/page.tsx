@@ -18,6 +18,7 @@ import {
   mockCompetitors,
   mockHallucinations,
 } from "@/data/mock";
+import ExportButton from "@/components/ui/ExportButton";
 import type { TimeFilter, ClaimStatus, LLMBreakdown, CompetitorVisibility } from "@/lib/types";
 
 const TIME_FILTERS: { value: TimeFilter; label: string }[] = [
@@ -220,6 +221,7 @@ export default function DashboardPage() {
           Dashboard Overview
         </h1>
         <div className="flex items-center gap-3">
+          <ExportButton dataType="full" label="Export All" />
           <button
             type="button"
             onClick={handleRunScan}

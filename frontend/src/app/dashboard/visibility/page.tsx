@@ -17,6 +17,8 @@ import {
   mockTopicRankings,
   mockQueryResponses,
 } from "@/data/mock";
+import ExportButton from "@/components/ui/ExportButton";
+import { Legend } from "recharts";
 import type { TimeFilter, TopicRanking, CompetitorVisibility } from "@/lib/types";
 
 const TIME_FILTERS: { value: TimeFilter; label: string }[] = [
@@ -138,10 +140,24 @@ function LoadingSkeleton() {
   );
 }
 
+interface ComparisonData {
+  period1: Record<string, number>;
+  period2: Record<string, number>;
+  deltas: Record<string, number>;
+}
+
 export default function VisibilityPage() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all_time");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [p1Start, setP1Start] = useState("");
+  const [p1End, setP1End] = useState("");
+  const [p2Start, setP2Start] = useState("");
+  const [p2End, setP2End] = useState("");
+  const [comparison, setComparison] = useState<ComparisonData | null>(null);
+  const [comparing, setComparing] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -151,6 +167,16 @@ export default function VisibilityPage() {
       .catch(() => setData(null))
       .finally(() => setLoading(false));
   }, [timeFilter]);
+
+  const handleCompare = () => {
+    if (!p1Start || !p1End || !p2Start || !p2End) return;
+    setComparing(true);
+    api
+      .getHistoryComparison("", p1Start, p1End, p2Start, p2End)
+      .then((res: unknown) => setComparison(res as ComparisonData))
+      .catch(() => setComparison(null))
+      .finally(() => setComparing(false));
+  };
 
   const visibilityTrend =
     data?.visibility_history?.length > 0
@@ -195,7 +221,9 @@ export default function VisibilityPage() {
       {/* Time filter bar */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-900">Visibility</h1>
-        <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+        <div className="flex items-center gap-3">
+          <ExportButton dataType="visibility" />
+          <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
           {TIME_FILTERS.map(({ value, label }) => (
             <button
               key={value}
@@ -209,6 +237,7 @@ export default function VisibilityPage() {
               {label}
             </button>
           ))}
+          </div>
         </div>
       </div>
 
@@ -254,6 +283,138 @@ export default function VisibilityPage() {
             </LineChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* Compare Periods */}
+      <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+        <button
+          type="button"
+          onClick={() => setCompareOpen(!compareOpen)}
+          className="flex w-full items-center justify-between"
+        >
+          <h2 className="text-lg font-semibold text-slate-900">
+            Compare Periods
+          </h2>
+          <svg
+            className={`h-5 w-5 text-slate-400 transition-transform ${compareOpen ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {compareOpen && (
+          <div className="mt-4 space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+                <p className="text-sm font-medium text-slate-700">Period A</p>
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={p1Start}
+                    onChange={(e) => setP1Start(e.target.value)}
+                    className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <input
+                    type="date"
+                    value={p1End}
+                    onChange={(e) => setP1End(e.target.value)}
+                    className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+                <p className="text-sm font-medium text-slate-700">Period B</p>
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={p2Start}
+                    onChange={(e) => setP2Start(e.target.value)}
+                    className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <input
+                    type="date"
+                    value={p2End}
+                    onChange={(e) => setP2End(e.target.value)}
+                    className="block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCompare}
+              disabled={comparing || !p1Start || !p1End || !p2Start || !p2End}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {comparing ? "Comparing..." : "Compare"}
+            </button>
+
+            {comparison && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  {[
+                    { label: "Visibility Score", key: "visibility_score", suffix: "" },
+                    { label: "Mentions", key: "mention_count", suffix: "" },
+                    { label: "Claims", key: "claim_count", suffix: "" },
+                    { label: "Avg Sentiment", key: "avg_sentiment", suffix: "" },
+                  ].map(({ label, key, suffix }) => {
+                    const delta = comparison.deltas[key] ?? 0;
+                    const isPositive = delta >= 0;
+                    return (
+                      <div key={key} className="rounded-lg border border-slate-200 p-3 text-center">
+                        <p className="text-xs font-medium text-slate-500">{label}</p>
+                        <div className="mt-1 flex items-center justify-center gap-2">
+                          <span className="text-sm text-slate-600">
+                            {comparison.period1[key]}{suffix}
+                          </span>
+                          <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                          <span className="text-sm font-medium text-slate-900">
+                            {comparison.period2[key]}{suffix}
+                          </span>
+                        </div>
+                        <p className={`mt-1 text-xs font-medium ${isPositive ? "text-emerald-600" : "text-red-600"}`}>
+                          {isPositive ? "+" : ""}{delta}{suffix}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="h-52">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={[
+                        { name: "Period A", ...comparison.period1 },
+                        { name: "Period B", ...comparison.period2 },
+                      ]}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
+                      <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "white",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                        }}
+                      />
+                      <Legend />
+                      <Line type="monotone" dataKey="visibility_score" name="Visibility" stroke="#3b82f6" strokeWidth={2} dot={{ r: 5 }} />
+                      <Line type="monotone" dataKey="mention_count" name="Mentions" stroke="#10b981" strokeWidth={2} dot={{ r: 5 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Brand Ranking Panel */}

@@ -72,6 +72,25 @@ export default function SettingsPage() {
     weekly_report: true,
     opportunity_alerts: false,
   });
+  const [notifEmail, setNotifEmail] = useState("");
+  const [notifSaveStatus, setNotifSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  useEffect(() => {
+    if (user?.id) {
+      api
+        .getNotificationPrefs(user.id)
+        .then((prefs: unknown) => {
+          const p = prefs as Record<string, unknown>;
+          setNotifications({
+            hallucinations: p.hallucination_alerts !== false,
+            weekly_report: p.weekly_report !== false,
+            opportunity_alerts: p.opportunity_alerts === true,
+          });
+          if (p.email) setNotifEmail(String(p.email));
+        })
+        .catch(() => {});
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -173,7 +192,36 @@ export default function SettingsPage() {
   };
 
   const toggleNotification = (id: string) => {
-    setNotifications((prev) => ({ ...prev, [id]: !prev[id] }));
+    const newVal = !notifications[id];
+    setNotifications((prev) => ({ ...prev, [id]: newVal }));
+
+    if (user?.id && !isDummyUser) {
+      const keyMap: Record<string, string> = {
+        hallucinations: "hallucination_alerts",
+        weekly_report: "weekly_report",
+        opportunity_alerts: "opportunity_alerts",
+      };
+      api
+        .updateNotificationPrefs(user.id, { [keyMap[id]]: newVal })
+        .catch(() => {
+          setNotifications((prev) => ({ ...prev, [id]: !newVal }));
+        });
+    }
+  };
+
+  const handleSaveNotifEmail = () => {
+    if (!user?.id || isDummyUser) return;
+    setNotifSaveStatus("saving");
+    api
+      .updateNotificationPrefs(user.id, { email: notifEmail })
+      .then(() => {
+        setNotifSaveStatus("saved");
+        setTimeout(() => setNotifSaveStatus("idle"), 2000);
+      })
+      .catch(() => {
+        setNotifSaveStatus("error");
+        setTimeout(() => setNotifSaveStatus("idle"), 2000);
+      });
   };
 
   if (loading) {
@@ -524,6 +572,42 @@ export default function SettingsPage() {
               </span>
             </label>
           ))}
+          <div className="pt-2">
+            <label
+              htmlFor="notif-email"
+              className="block text-sm font-medium text-slate-700"
+            >
+              Notification Email
+            </label>
+            <div className="mt-1 flex gap-2">
+              <input
+                id="notif-email"
+                type="email"
+                value={notifEmail}
+                onChange={(e) => setNotifEmail(e.target.value)}
+                placeholder={user?.email ?? "your@email.com"}
+                disabled={isDummyUser}
+                className="block flex-1 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500"
+              />
+              <button
+                type="button"
+                onClick={handleSaveNotifEmail}
+                disabled={isDummyUser || notifSaveStatus === "saving"}
+                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:opacity-70"
+              >
+                {notifSaveStatus === "saving"
+                  ? "Saving..."
+                  : notifSaveStatus === "saved"
+                    ? "Saved!"
+                    : notifSaveStatus === "error"
+                      ? "Error"
+                      : "Save"}
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Leave blank to use your account email for notifications.
+            </p>
+          </div>
         </div>
       </div>
 

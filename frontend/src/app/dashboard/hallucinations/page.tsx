@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { mockHallucinations } from "@/data/mock";
+import ExportButton from "@/components/ui/ExportButton";
 import type { Claim, ClaimStatus } from "@/lib/types";
 
 const STATUS_OPTIONS: { value: ClaimStatus; label: string }[] = [
@@ -138,7 +139,10 @@ export default function HallucinationsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-slate-900">Hallucinations</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-slate-900">Hallucinations</h1>
+        <ExportButton dataType="claims" />
+      </div>
 
       {/* Summary stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

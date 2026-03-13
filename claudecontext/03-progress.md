@@ -1,6 +1,6 @@
 # GeoMav — Progress Tracker
 
-Last updated: 2026-03-13 (session 3)
+Last updated: 2026-03-13 (session 4)
 
 ## Completed
 
@@ -58,13 +58,16 @@ Last updated: 2026-03-13 (session 3)
 - [x] Content: AI Summary / llms.txt / JSON-LD tabs with editor and deploy buttons
 - [x] Settings: business profile form, API keys, notification toggles, account management
 
-### Backend API (12 routers)
+### Backend API (16 routers)
 - [x] All routers created with mock data
 - [x] All routers updated to query Supabase with graceful mock fallback
 - [x] Dashboard aggregation from multiple tables
 - [x] CRUD operations for hallucinations, prompts, opportunities, content, business
 - [x] Run Scan endpoint triggering Analytics Agent as background task
 - [x] User router: GET /api/user/profile (with mock fallback), DELETE /api/user/account
+- [x] Notifications router: GET/PUT /api/notifications/preferences, GET /api/notifications/log
+- [x] Export router: GET /api/export (CSV/JSON for mentions, claims, competitors, visibility, full)
+- [x] History router: GET /api/history/compare, GET /api/history/snapshots, POST /api/history/snapshot
 
 ### Frontend-Backend Wiring
 - [x] All 10 dashboard pages fetch from API via useEffect/useState
@@ -72,16 +75,44 @@ Last updated: 2026-03-13 (session 3)
 - [x] Mock data fallback on API error
 - [x] Write operations wired: hallucination status, prompt CRUD, opportunity status, content save/deploy, business profile save, account profile save, password change, account deletion
 - [x] Run Scan button on dashboard overview
+- [x] Notification preferences toggle persisted to backend (fetch on mount, persist on change)
+- [x] Export buttons on dashboard, hallucinations, and visibility pages (CSV/JSON download)
+- [x] Compare Periods section on visibility page with date pickers, side-by-side metrics, and dual-line chart
 
 ### Database
 - [x] Supabase SQL migration (001_initial_schema.sql): 8 tables, indexes, RLS policies
 - [x] Seed data (002_seed_data.sql): sample business, queries, responses, mentions, claims, content, opportunities, competitors
+- [x] Migration 003_notifications_and_snapshots.sql: notification_preferences, notification_log, visibility_snapshots tables
 - [x] Migrations run in Supabase
 
 ### Backend Agents
 - [x] Analytics Agent: LLM querying with mock fallback, mention extraction, visibility calculation
 - [x] Enrichment Agent: business summary, llms.txt, JSON-LD, FAQ generation
 - [x] Reinforcement Agent: claim extraction, classification, correction generation
+
+### Email & Notification System
+- [x] Resend email service with dev fallback (logs to console when no API key)
+- [x] Hallucination alert emails triggered automatically after scans (when new claims found)
+- [x] Weekly report email generation (visibility score, mentions, claims, top opportunities)
+- [x] APScheduler cron job for weekly reports (Monday 09:00 UTC)
+- [x] Notification preferences table (per-user toggles + custom email)
+- [x] Notification log table for email send audit trail
+
+### Data Export
+- [x] Export router: CSV and JSON formats
+- [x] Exportable data types: mentions, claims, competitors, visibility, full (all)
+- [x] Date range filtering on all export types
+- [x] ExportButton shared component with dropdown (CSV/JSON)
+- [x] Export buttons on dashboard, hallucinations, and visibility pages
+
+### Historical Data Comparison
+- [x] Visibility snapshots table for periodic data capture
+- [x] Automatic snapshot creation after each scan
+- [x] Manual snapshot trigger endpoint
+- [x] Period comparison API (two date ranges with deltas)
+- [x] Compare Periods collapsible section on visibility page
+- [x] Side-by-side metrics (visibility, mentions, claims, sentiment) with delta indicators
+- [x] Dual-line comparison chart (Recharts)
 
 ## Pending / Not Yet Built
 
@@ -110,13 +141,13 @@ Last updated: 2026-03-13 (session 3)
 - [x] Header avatar links to Settings; sidebar shows user identity
 
 ### Missing Features
-- [ ] Email notification system for hallucination alerts
-- [ ] Weekly report generation and delivery
+- [x] Email notification system for hallucination alerts
+- [x] Weekly report generation and delivery
 - [ ] Stripe/payment integration for subscription tiers
 - [ ] Multi-business support (multiple profiles per user)
 - [ ] Agency white-label features
-- [ ] Data export functionality
-- [ ] Historical data comparison / trend analysis with real data
+- [x] Data export functionality
+- [x] Historical data comparison / trend analysis with real data
 
 ### Polish
 - [ ] Error boundary components

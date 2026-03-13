@@ -98,4 +98,47 @@ export const api = {
       method: "DELETE",
       body: JSON.stringify({ user_id: userId }),
     }),
+
+  getNotificationPrefs: (userId: string) =>
+    apiFetch(`/api/notifications/preferences?user_id=${userId}`),
+
+  updateNotificationPrefs: (userId: string, prefs: Record<string, unknown>) =>
+    apiFetch("/api/notifications/preferences", {
+      method: "PUT",
+      body: JSON.stringify({ user_id: userId, ...prefs }),
+    }),
+
+  getNotificationLog: (userId: string) =>
+    apiFetch(`/api/notifications/log?user_id=${userId}`),
+
+  exportData: (type: string, format: string, dateFrom?: string, dateTo?: string) => {
+    const params = new URLSearchParams({ type, format });
+    if (dateFrom) params.set("date_from", dateFrom);
+    if (dateTo) params.set("date_to", dateTo);
+    return fetch(`${API_BASE}/api/export?${params}`);
+  },
+
+  getHistoryComparison: (
+    businessId: string,
+    p1Start: string,
+    p1End: string,
+    p2Start: string,
+    p2End: string
+  ) =>
+    apiFetch(
+      `/api/history/compare?business_id=${businessId}&period1_start=${p1Start}&period1_end=${p1End}&period2_start=${p2Start}&period2_end=${p2End}`
+    ),
+
+  getHistorySnapshots: (businessId: string, from?: string, to?: string) => {
+    const params = new URLSearchParams({ business_id: businessId });
+    if (from) params.set("date_from", from);
+    if (to) params.set("date_to", to);
+    return apiFetch(`/api/history/snapshots?${params}`);
+  },
+
+  createSnapshot: (businessId?: string) =>
+    apiFetch("/api/history/snapshot", {
+      method: "POST",
+      body: JSON.stringify(businessId ? { business_id: businessId } : {}),
+    }),
 };
