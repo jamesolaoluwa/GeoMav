@@ -42,3 +42,7 @@ class DeployCorrection(BaseModel):
     claim_id: str
     correction_type: str
     content: str
+
+
+class DeleteAccountRequest(BaseModel):
+    user_id: str

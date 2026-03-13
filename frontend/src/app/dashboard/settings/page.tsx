@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { createClient } from "@/lib/supabase";
+import { useUser } from "@/lib/useUser";
 
 const DEFAULT_PROFILE = {
   name: "Your Brand",
@@ -33,10 +36,42 @@ const NOTIFICATIONS = [
   { id: "opportunity_alerts", label: "Opportunity alerts" },
 ];
 
+function getInitials(displayName: string | undefined, email: string | undefined): string {
+  if (displayName) {
+    const parts = displayName.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return displayName.slice(0, 2).toUpperCase();
+  }
+  if (email) {
+    return email.slice(0, 2).toUpperCase();
+  }
+  return "U";
+}
+
 export default function SettingsPage() {
+  const router = useRouter();
+  const { user, isDummyUser } = useUser();
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const userDisplayName =
+    user
+      ? ((user.user_metadata as Record<string, string> | undefined)?.display_name ||
+        (user.user_metadata as Record<string, string> | undefined)?.full_name ||
+        user.email ||
+        "")
+      : "";
+  const [displayNameOverride, setDisplayNameOverride] = useState<string | null>(null);
+  const displayName = displayNameOverride ?? userDisplayName;
+  const [accountSaveStatus, setAccountSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordStatus, setPasswordStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [notifications, setNotifications] = useState<Record<string, boolean>>({
@@ -50,7 +85,7 @@ export default function SettingsPage() {
     setLoading(true);
     api
       .getBusiness()
-      .then((data: any) => {
+      .then((data: { name?: string; website?: string; category?: string; description?: string }) => {
         if (cancelled) return;
         setProfile({
           name: String(data?.name ?? DEFAULT_PROFILE.name),
@@ -68,6 +103,60 @@ export default function SettingsPage() {
       });
     return () => { cancelled = true; };
   }, []);
+
+  const handleSaveAccount = async () => {
+    if (isDummyUser) return;
+    setAccountSaveStatus("saving");
+    try {
+      const supabase = createClient();
+      await supabase.auth.updateUser({ data: { display_name: displayName } });
+      setAccountSaveStatus("saved");
+      setTimeout(() => setAccountSaveStatus("idle"), 2000);
+    } catch {
+      setAccountSaveStatus("error");
+      setTimeout(() => setAccountSaveStatus("idle"), 2000);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (isDummyUser) return;
+    if (newPassword.length < 8) {
+      setPasswordStatus("error");
+      setTimeout(() => setPasswordStatus("idle"), 2000);
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordStatus("error");
+      setTimeout(() => setPasswordStatus("idle"), 2000);
+      return;
+    }
+    setPasswordStatus("saving");
+    try {
+      const supabase = createClient();
+      await supabase.auth.updateUser({ password: newPassword });
+      setPasswordStatus("saved");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setPasswordStatus("idle"), 2000);
+    } catch {
+      setPasswordStatus("error");
+      setTimeout(() => setPasswordStatus("idle"), 2000);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (isDummyUser || !user || deleteConfirm !== "DELETE") return;
+    setDeleting(true);
+    try {
+      await api.deleteAccount(user.id);
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push("/");
+      router.refresh();
+    } catch {
+      setDeleting(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     setSaveStatus("saving");
@@ -97,6 +186,20 @@ export default function SettingsPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold text-slate-900">Settings</h1>
+        <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+          <div className="mb-4 flex items-center gap-4">
+            <div className="h-14 w-14 rounded-full bg-slate-200 animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-5 w-32 rounded bg-slate-200 animate-pulse" />
+              <div className="h-4 w-48 rounded bg-slate-100 animate-pulse" />
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="h-10 rounded-lg bg-slate-100 animate-pulse" />
+            <div className="h-10 rounded-lg bg-slate-100 animate-pulse" />
+            <div className="h-10 w-28 rounded-lg bg-slate-200 animate-pulse" />
+          </div>
+        </div>
         <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
           <div className="mb-4 h-6 w-40 rounded bg-slate-200 animate-pulse" />
           <div className="space-y-4">
@@ -131,6 +234,135 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-slate-900">Settings</h1>
+
+      {/* Account Profile */}
+      <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+          Account
+        </h2>
+        <div className="mb-4 flex items-center gap-4">
+          <div
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-700 text-lg font-semibold text-white"
+            aria-hidden
+          >
+            {getInitials(
+              (user?.user_metadata as Record<string, string> | undefined)?.display_name,
+              user?.email ?? undefined
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-slate-900">
+              {displayName || user?.email || "User"}
+            </p>
+            <p className="truncate text-sm text-slate-500">{user?.email ?? "—"}</p>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="display-name"
+              className="block text-sm font-medium text-slate-700"
+            >
+              Display Name
+            </label>
+            <input
+              id="display-name"
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayNameOverride(e.target.value)}
+              disabled={isDummyUser}
+              placeholder="Your name"
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="account-email"
+              className="block text-sm font-medium text-slate-700"
+            >
+              Email
+            </label>
+            <input
+              id="account-email"
+              type="email"
+              value={user?.email ?? ""}
+              readOnly
+              className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleSaveAccount}
+            disabled={accountSaveStatus === "saving" || isDummyUser}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:opacity-70"
+          >
+            {accountSaveStatus === "saving"
+              ? "Saving..."
+              : accountSaveStatus === "saved"
+                ? "Saved!"
+                : accountSaveStatus === "error"
+                  ? "Error"
+                  : "Save Profile"}
+          </button>
+        </div>
+      </div>
+
+      {/* Change Password */}
+      <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+          Change Password
+        </h2>
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="new-password"
+              className="block text-sm font-medium text-slate-700"
+            >
+              New Password
+            </label>
+            <input
+              id="new-password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              disabled={isDummyUser}
+              placeholder="Min 8 characters"
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="confirm-password"
+              className="block text-sm font-medium text-slate-700"
+            >
+              Confirm Password
+            </label>
+            <input
+              id="confirm-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={isDummyUser}
+              placeholder="Confirm new password"
+              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleChangePassword}
+            disabled={passwordStatus === "saving" || isDummyUser}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:opacity-70"
+          >
+            {passwordStatus === "saving"
+              ? "Saving..."
+              : passwordStatus === "saved"
+                ? "Saved!"
+                : passwordStatus === "error"
+                  ? "Error"
+                  : "Change Password"}
+          </button>
+        </div>
+      </div>
 
       {/* Business Profile */}
       <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
@@ -300,6 +532,69 @@ export default function SettingsPage() {
           ))}
         </div>
       </div>
+
+      {/* Danger Zone */}
+      <div className="rounded-xl border-2 border-red-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-4 text-lg font-semibold text-red-700">Danger Zone</h2>
+        <p className="mb-4 text-sm text-slate-600">
+          Permanently delete your account and all associated data. This action cannot be undone.
+        </p>
+        <button
+          type="button"
+          onClick={() => setDeleteModalOpen(true)}
+          disabled={isDummyUser}
+          className="rounded-lg border-2 border-red-600 bg-white px-4 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-70"
+        >
+          Delete Account
+        </button>
+      </div>
+
+      {/* Delete confirmation modal */}
+      {deleteModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-modal-title"
+        >
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <h2 id="delete-modal-title" className="mb-4 text-lg font-semibold text-slate-900">
+              Delete Account
+            </h2>
+            <p className="mb-4 text-sm text-slate-600">
+              This will permanently delete your account and all data. Type <strong>DELETE</strong> to confirm.
+            </p>
+            <input
+              type="text"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder="Type DELETE to confirm"
+              className="mb-4 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setDeleteConfirm("");
+                }}
+                disabled={deleting}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:opacity-70"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={deleting || deleteConfirm !== "DELETE"}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-70"
+              >
+                {deleting ? "Deleting..." : "Delete Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
